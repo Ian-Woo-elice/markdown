@@ -57,9 +57,15 @@
         .sidebar-actions button:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
         
         .tree-content { flex: 1; overflow-y: auto; padding: 8px 0; font-family: 'Segoe UI', sans-serif; }
-        .tree-item { padding: 4px 8px; cursor: pointer; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 6px; color: var(--text-main); line-height: 1.8; user-select: none; }
+        .tree-item { padding: 4px 8px; cursor: pointer; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 6px; color: var(--text-main); line-height: 1.8; user-select: none; border: 2px solid transparent; }
         .tree-item:hover { background: rgba(127,127,127,0.1); }
         .tree-item.active { background: var(--primary-light); color: var(--primary); border-left: 3px solid var(--primary); padding-left: 5px; }
+        
+        /* [NEW] Drag & Drop Styles */
+        .tree-item[draggable="true"] { cursor: grab; }
+        .tree-item.drag-over { background: var(--primary-light); border: 2px dashed var(--primary); border-radius: 4px; }
+        .tree-content.drag-over { background: var(--primary-light); border: 2px dashed var(--primary); }
+
         .tree-folder { font-weight: 600; color: var(--text-sub); }
         .empty-msg { padding: 30px; text-align: center; color: var(--text-sub); font-size: 13px; line-height: 1.5; }
 
@@ -271,7 +277,8 @@
                 theme: localStorage.getItem('theme') || 'light',
                 isDirty: false,
                 isResizing: false,
-                contextTarget: null
+                contextTarget: null,
+                dragSource: null // [NEW] Drag source info
             },
             ui: {},
 
@@ -340,6 +347,21 @@
                     // Context Menu
                     document.addEventListener('click', () => ui.ctxMenu.style.display = 'none');
                     ui.ctxDelete.addEventListener('click', App.FS.deleteItem);
+
+                    // [NEW] Root Drop Zone (Empty area)
+                    ui.fileTree.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        if (App.state.rootHandle) ui.fileTree.classList.add('drag-over');
+                    });
+                    ui.fileTree.addEventListener('dragleave', () => ui.fileTree.classList.remove('drag-over'));
+                    ui.fileTree.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        ui.fileTree.classList.remove('drag-over');
+                        // Drop on root
+                        if (App.state.dragSource && App.state.rootHandle) {
+                            App.FS.moveEntry(App.state.dragSource, App.state.rootHandle);
+                        }
+                    });
                 }
             },
 
@@ -364,12 +386,12 @@
                     App.ui.fileTree.appendChild(tree);
                 },
 
-                async buildTree(dirHandle, level = 0) {
+                // [UPDATED] buildTree to support Drag & Drop and passing Parent Handle
+                async buildTree(dirHandle, parentHandle = null, level = 0) {
                     const ul = document.createElement('div');
                     const entries = [];
                     for await (const entry of dirHandle.values()) { entries.push(entry); }
                     
-                    // Sort: Folders first
                     entries.sort((a, b) => (a.kind === b.kind ? 0 : a.kind === 'directory' ? -1 : 1) || a.name.localeCompare(b.name));
 
                     for (const entry of entries) {
@@ -380,12 +402,47 @@
                         const icon = entry.kind === 'directory' ? '📂' : (entry.name.endsWith('.json') ? '⚙️' : '📄');
                         div.innerHTML = `<span>${icon}</span> ${entry.name}`;
                         
+                        // [NEW] Drag & Drop Attributes
+                        div.setAttribute('draggable', 'true');
+                        
+                        // [NEW] Drag Events
+                        div.addEventListener('dragstart', (e) => {
+                            e.stopPropagation(); // Prevent bubbling
+                            App.state.dragSource = { handle: entry, parent: dirHandle }; // Current dir is parent of this entry
+                            e.dataTransfer.effectAllowed = 'move';
+                            div.style.opacity = '0.5';
+                        });
+
+                        div.addEventListener('dragend', () => div.style.opacity = '1');
+
+                        div.addEventListener('dragover', (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            // Only allow drop on directories
+                            if (entry.kind === 'directory') {
+                                div.classList.add('drag-over');
+                                e.dataTransfer.dropEffect = 'move';
+                            }
+                        });
+
+                        div.addEventListener('dragleave', (e) => {
+                            div.classList.remove('drag-over');
+                        });
+
+                        div.addEventListener('drop', async (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            div.classList.remove('drag-over');
+                            if (entry.kind === 'directory' && App.state.dragSource) {
+                                await App.FS.moveEntry(App.state.dragSource, entry);
+                            }
+                        });
+
                         // Click Event
                         div.onclick = async (e) => {
                             e.stopPropagation();
                             if (entry.kind === 'directory') {
-                                App.state.activeFolderHandle = entry; // Set as target for new file
-                                // [NEW] 폴더 클릭 시 index 파일 자동 로드 시도
+                                App.state.activeFolderHandle = entry; 
                                 await App.FS.tryLoadIndexFile(entry);
                             } else {
                                 App.FS.loadFile(entry);
@@ -409,34 +466,70 @@
 
                         // Recursive for directory
                         if (entry.kind === 'directory') {
-                            const children = await App.FS.buildTree(entry, level + 1);
+                            const children = await App.FS.buildTree(entry, dirHandle, level + 1);
                             ul.appendChild(children);
                         }
                     }
                     return ul;
                 },
 
-                // [NEW] Try loading index.md or .json in directory
+                // [NEW] Move Entry (Copy & Delete)
+                async moveEntry(sourceInfo, destDirHandle) {
+                    const { handle: source, parent: sourceParent } = sourceInfo;
+                    
+                    // Basic Validation
+                    if (source === destDirHandle) return; // Can't move into self
+                    if (sourceParent === destDirHandle) return; // Same directory
+                    // NOTE: Ideally should check if dest is subdirectory of source
+
+                    if (!confirm(`'${source.name}'을(를) '${destDirHandle.name}'(으)로 이동하시겠습니까?`)) return;
+
+                    try {
+                        App.Utils.toggleLoading(true);
+                        
+                        // Recursive Move Function
+                        const copyRecursively = async (srcHandle, dstHandle) => {
+                            if (srcHandle.kind === 'file') {
+                                const file = await srcHandle.getFile();
+                                const newFileHandle = await dstHandle.getFileHandle(srcHandle.name, { create: true });
+                                const writable = await newFileHandle.createWritable();
+                                await writable.write(file);
+                                await writable.close();
+                            } else {
+                                const newDirHandle = await dstHandle.getDirectoryHandle(srcHandle.name, { create: true });
+                                for await (const entry of srcHandle.values()) {
+                                    await copyRecursively(entry, newDirHandle);
+                                }
+                            }
+                        };
+
+                        // 1. Copy
+                        await copyRecursively(source, destDirHandle);
+
+                        // 2. Delete Original
+                        await sourceParent.removeEntry(source.name, { recursive: true });
+
+                        // 3. Refresh
+                        await App.FS.refreshTree();
+                        App.state.dragSource = null;
+
+                    } catch (err) {
+                        alert('이동 실패: ' + err.message);
+                        console.error(err);
+                    } finally {
+                        App.Utils.toggleLoading(false);
+                    }
+                },
+
                 async tryLoadIndexFile(dirHandle) {
                     let targetFile = null;
-                    
                     for await (const [name, handle] of dirHandle.entries()) {
                         if (handle.kind === 'file') {
-                            // Priority 1: index.md
-                            if (name.toLowerCase() === 'index.md') {
-                                targetFile = handle;
-                                break; 
-                            }
-                            // Priority 2: .json file (e.g. _category_.json)
-                            if (!targetFile && name.endsWith('.json')) {
-                                targetFile = handle;
-                            }
+                            if (name.toLowerCase() === 'index.md') { targetFile = handle; break; }
+                            if (!targetFile && name.endsWith('.json')) { targetFile = handle; }
                         }
                     }
-
-                    if (targetFile) {
-                        await this.loadFile(targetFile);
-                    }
+                    if (targetFile) await this.loadFile(targetFile);
                 },
 
                 // 3. Load File
@@ -667,6 +760,9 @@
                         });
                         c.insertBefore(nav,c.firstChild); el.replaceWith(c);
                     });
+                },
+                toggleLoading(show) {
+                    App.ui.spinner.classList.toggle('hidden', !show);
                 }
             }
         };
