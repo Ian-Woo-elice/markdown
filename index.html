@@ -3,52 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Docusaurus Editor Pro (Final Optimized)</title>
+    <title>Docusaurus Editor Pro (File System Access)</title>
     
-    <!-- 1. External Libraries -->
-    <!-- Marked: 마크다운 파서 -->
+    <!-- Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <!-- Highlight.js: 코드 구문 강조 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    <!-- DOMPurify: XSS 방지 및 HTML 정화 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
-    <!-- js-yaml: Front Matter 파싱 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
 
     <style>
-        /* --- 2. CSS Variables & Reset --- */
+        /* --- CSS Variables --- */
         :root {
             --bg-main: #ffffff; --bg-sidebar: #f6f8fa; --bg-toolbar: #ffffff; --bg-status: #f0f0f0; --bg-modal: #ffffff;
             --text-main: #24292f; --text-sub: #57606a;
             --border: #d0d7de;
             --primary: #25c2a0; --primary-hover: #1e9e83; --primary-light: rgba(37, 194, 160, 0.1);
-            --resizer-bg: transparent; --resizer-hover: #25c2a0;
-            --code-bg: #f6f8fa;
-            --header-bg: #242526; --header-text: #fff;
+            --code-bg: #f6f8fa; --header-bg: #242526; --header-text: #fff;
             --overlay: rgba(0, 0, 0, 0.5);
             /* Admonitions */
-            --note-bg: #f5f6f7; --note-border: #9e9e9e;
-            --tip-bg: #f0fdf4; --tip-border: #25c2a0;
-            --info-bg: #eff6ff; --info-border: #60a5fa;
-            --warn-bg: #fffbf0; --warn-border: #fbbf24;
+            --note-bg: #f5f6f7; --note-border: #9e9e9e; --tip-bg: #f0fdf4; --tip-border: #25c2a0;
+            --info-bg: #eff6ff; --info-border: #60a5fa; --warn-bg: #fffbf0; --warn-border: #fbbf24;
             --danger-bg: #fef2f2; --danger-border: #f87171;
         }
         body.dark-mode {
             --bg-main: #0d1117; --bg-sidebar: #161b22; --bg-toolbar: #0d1117; --bg-status: #161b22; --bg-modal: #1c2128;
             --text-main: #c9d1d9; --text-sub: #8b949e;
-            --border: #30363d;
-            --resizer-hover: #25c2a0;
-            --code-bg: #161b22; --header-bg: #161b22;
-            --primary-light: rgba(37, 194, 160, 0.2);
-            --overlay: rgba(0, 0, 0, 0.7);
+            --border: #30363d; --code-bg: #161b22; --header-bg: #161b22;
+            --primary-light: rgba(37, 194, 160, 0.2); --overlay: rgba(0, 0, 0, 0.7);
             --note-bg: #303336; --tip-bg: #1e2923; --info-bg: #1c2633; --warn-bg: #2d2618; --danger-bg: #311c1d;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; height: 100vh; display: flex; flex-direction: column; background: var(--bg-main); color: var(--text-main); overflow: hidden; }
 
-        /* --- Header --- */
+        /* Header */
         header { height: 50px; background: var(--header-bg); color: var(--header-text); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; user-select: none; }
         .brand { font-weight: 800; font-size: 1.1rem; } .brand span { color: var(--primary); }
         .controls { display: flex; align-items: center; gap: 8px; }
@@ -57,22 +46,25 @@
         .btn.primary { background: var(--primary); color: #000; } .btn.primary:hover { background: var(--primary-hover); }
         .btn.dirty::after { content: ''; width: 8px; height: 8px; background: #ff5555; border-radius: 50%; display: inline-block; }
 
-        /* --- Layout --- */
+        /* Layout */
         .container { display: flex; flex: 1; height: calc(100vh - 50px); position: relative; }
         
         /* Sidebar */
-        .sidebar { width: 240px; background: var(--bg-sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
-        .sidebar-header { padding: 10px; border-bottom: 1px solid var(--border); }
-        .search-box { width: 100%; padding: 6px 10px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg-main); color: var(--text-main); font-size: 13px; outline: none; }
-        .search-box:focus { border-color: var(--primary); }
-        .tree-content { flex: 1; overflow-y: auto; padding: 8px 0; }
-        .tree-item { padding: 4px 16px; cursor: pointer; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 6px; color: var(--text-main); line-height: 1.8; user-select: none; }
+        .sidebar { width: 260px; background: var(--bg-sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
+        .sidebar-header { padding: 10px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
+        .sidebar-actions { display: flex; gap: 4px; }
+        .sidebar-actions button { flex: 1; padding: 4px; font-size: 12px; background: var(--bg-main); border: 1px solid var(--border); color: var(--text-main); cursor: pointer; border-radius: 4px; }
+        .sidebar-actions button:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
+        
+        .tree-content { flex: 1; overflow-y: auto; padding: 8px 0; font-family: 'Segoe UI', sans-serif; }
+        .tree-item { padding: 4px 8px; cursor: pointer; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 6px; color: var(--text-main); line-height: 1.8; user-select: none; }
         .tree-item:hover { background: rgba(127,127,127,0.1); }
-        .tree-item.active { background: var(--primary-light); color: var(--primary); border-left: 3px solid var(--primary); padding-left: 13px; }
+        .tree-item.active { background: var(--primary-light); color: var(--primary); border-left: 3px solid var(--primary); padding-left: 5px; }
+        .tree-folder { font-weight: 600; color: var(--text-sub); }
         .empty-msg { padding: 30px; text-align: center; color: var(--text-sub); font-size: 13px; line-height: 1.5; }
 
-        /* Editor Area */
-        .editor-area { display: flex; flex-direction: column; background: var(--bg-main); width: 45%; min-width: 250px; }
+        /* Editor & Preview */
+        .editor-area { display: flex; flex-direction: column; background: var(--bg-main); width: 45%; min-width: 200px; }
         .toolbar { padding: 6px 8px; border-bottom: 1px solid var(--border); background: var(--bg-toolbar); display: flex; gap: 4px; flex-wrap: wrap; user-select: none; }
         .toolbar button { background: transparent; border: 1px solid transparent; color: var(--text-main); padding: 4px 8px; border-radius: 4px; cursor: pointer; min-width: 28px; }
         .toolbar button:hover { background: rgba(127,127,127,0.1); }
@@ -80,13 +72,10 @@
         .editor-wrapper { flex: 1; position: relative; display: flex; flex-direction: column; }
         #editor { flex: 1; width: 100%; padding: 20px; border: none; resize: none; outline: none; background: transparent; color: var(--text-main); font-family: 'SFMono-Regular', Consolas, monospace; font-size: 14px; line-height: 1.6; }
         .status-bar { height: 26px; background: var(--bg-status); border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: flex-end; padding: 0 16px; font-size: 11px; color: var(--text-sub); gap: 16px; user-select: none; }
-
-        /* Resizer */
-        .resizer { width: 6px; background: var(--resizer-bg); margin: 0 -3px; cursor: col-resize; z-index: 10; position: relative; transition: background 0.2s; }
-        .resizer:hover, .resizer.resizing { background: var(--resizer-hover); }
-
-        /* Preview Area */
-        .preview-area { flex: 1; min-width: 250px; display: flex; flex-direction: column; background: var(--bg-main); position: relative; overflow: hidden; border-left: 1px solid var(--border); }
+        .resizer { width: 6px; background: transparent; margin: 0 -3px; cursor: col-resize; z-index: 10; position: relative; }
+        .resizer:hover { background: var(--primary); }
+        
+        .preview-area { flex: 1; min-width: 200px; display: flex; flex-direction: column; background: var(--bg-main); position: relative; overflow: hidden; border-left: 1px solid var(--border); }
         .doc-header { padding: 30px 40px 10px; font-size: 2em; font-weight: 800; color: var(--text-main); line-height: 1.3; }
         #preview { flex: 1; padding: 10px 40px 50px; overflow-y: auto; font-size: 16px; line-height: 1.7; scroll-behavior: smooth; }
 
@@ -107,46 +96,43 @@
         .admonition.info { background: var(--info-bg); border-color: var(--info-border); }
         .admonition.warning { background: var(--warn-bg); border-color: var(--warn-border); }
         .admonition.danger { background: var(--danger-bg); border-color: var(--danger-border); }
-
+        
         .tabs-container { margin-bottom: 16px; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
-        .tabs-nav { display: flex; background: var(--bg-sidebar); border-bottom: 1px solid var(--border); margin: 0; padding: 0; list-style: none; overflow-x: auto; user-select: none; }
-        .tab-btn { padding: 10px 16px; cursor: pointer; border: none; background: transparent; color: var(--text-main); font-weight: 600; border-bottom: 2px solid transparent; font-size: 14px; }
-        .tab-btn:hover { background: rgba(0,0,0,0.05); }
+        .tabs-nav { display: flex; background: var(--bg-sidebar); border-bottom: 1px solid var(--border); margin: 0; padding: 0; list-style: none; }
+        .tab-btn { padding: 10px 16px; cursor: pointer; border: none; background: transparent; color: var(--text-main); font-weight: 600; border-bottom: 2px solid transparent; }
         .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); background: var(--bg-main); }
-        .tab-panel { display: none; padding: 16px; background: var(--bg-main); border-top: 1px solid transparent; }
-        .tab-panel.active { display: block; animation: fadeIn 0.2s; }
-
+        .tab-panel { display: none; padding: 16px; background: var(--bg-main); }
+        .tab-panel.active { display: block; }
+        
         details { border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; margin-bottom: 16px; background: var(--bg-main); }
-        summary { cursor: pointer; font-weight: bold; outline: none; padding: 4px 0; user-select: none; }
+        summary { cursor: pointer; font-weight: bold; outline: none; padding: 4px 0; }
         details[open] { border-color: var(--primary); }
-        details[open] summary { border-bottom: 1px solid var(--border); margin-bottom: 8px; }
 
-        /* General Preview */
         #preview h1, #preview h2, #preview h3 { margin-top: 24px; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 0.3em; color: var(--text-main); }
         #preview code { background: rgba(135,131,120,0.15); padding: 0.2em 0.4em; border-radius: 4px; font-family: monospace; font-size: 90%; }
         #preview pre { background: var(--code-bg); padding: 16px; border-radius: 8px; overflow: auto; margin-bottom: 16px; }
         #preview blockquote { border-left: 4px solid var(--primary); padding-left: 16px; margin: 0 0 16px; background: var(--primary-light); }
         #preview img { max-width: 100%; border-radius: 6px; }
 
-        /* Modal */
+        /* Modals & Utils */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--overlay); display: none; justify-content: center; align-items: center; z-index: 1000; }
-        .modal { background: var(--bg-modal); padding: 24px; border-radius: 8px; width: 400px; max-width: 90%; box-shadow: 0 10px 25px rgba(0,0,0,0.3); color: var(--text-main); border: 1px solid var(--border); }
+        .modal { background: var(--bg-modal); padding: 24px; border-radius: 8px; width: 400px; border: 1px solid var(--border); box-shadow: 0 10px 25px rgba(0,0,0,0.3); color: var(--text-main); }
         .modal h3 { margin-top: 0; margin-bottom: 16px; }
-        .modal-body { margin-bottom: 20px; font-size: 14px; max-height: 300px; overflow-y: auto; }
-        .modal-footer { display: flex; justify-content: flex-end; gap: 8px; }
-        .input-group { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; }
-        .input-group label { width: 60px; font-weight: 500; }
+        .input-group { display: flex; gap: 10px; margin-bottom: 12px; align-items: center; }
+        .input-group label { width: 70px; font-weight: 500; }
         .input-group input { flex: 1; padding: 8px; border: 1px solid var(--border); background: var(--bg-main); color: var(--text-main); border-radius: 4px; outline: none; }
         .input-group input:focus { border-color: var(--primary); }
+        .modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
         
-        .valid-link { color: var(--primary); font-weight: bold; }
-        .invalid-link { color: var(--danger-border); font-weight: bold; }
-        .link-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         .hidden { display: none; }
         .spinner { position: absolute; top: 50%; left: 50%; width: 30px; height: 30px; border: 3px solid rgba(0,0,0,0.1); border-top: 3px solid var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; z-index: 10; transform: translate(-50%, -50%); }
         @keyframes spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
+        
+        /* Context Menu */
+        .context-menu { position: absolute; background: var(--bg-modal); border: 1px solid var(--border); box-shadow: 0 2px 10px rgba(0,0,0,0.2); border-radius: 4px; z-index: 2000; display: none; width: 120px; }
+        .ctx-item { padding: 8px 12px; cursor: pointer; font-size: 13px; color: var(--text-main); }
+        .ctx-item:hover { background: var(--primary-light); color: var(--primary); }
+        .ctx-item.delete { color: var(--danger-border); }
         
         @media (max-width: 1200px) { .toc-area { display: none; } }
     </style>
@@ -154,26 +140,37 @@
 <body>
 
     <header>
-        <div class="brand">Docusaurus <span>Editor</span></div>
+        <div class="brand">CXO<span>Markdown Editor</span></div>
         <div class="controls">
             <button id="themeToggle" class="btn" title="테마 변경">🌙</button>
             <div class="divider"></div>
-            <label class="btn" style="background: #444; cursor: pointer;">
-                📂 프로젝트 열기
-                <input type="file" id="folderInput" webkitdirectory directory hidden>
-            </label>
-            <button id="saveBtn" class="btn primary" title="저장 (Ctrl+S)">💾 저장</button>
+            
+            <button id="openFolderBtn" class="btn" style="background: #444;">
+                📂 프로젝트 열기 (권한 필요)
+            </button>
+            
+            <!-- [NEW] Separated Save & Download Buttons -->
+            <button id="saveBtn" class="btn primary" title="현재 파일 덮어쓰기 (Ctrl+S)">💾 저장</button>
+            <button id="downloadBtn" class="btn" title="파일로 다운로드">📥 다운로드</button>
         </div>
     </header>
 
     <div class="container" id="container">
         <!-- Sidebar -->
-        <aside class="sidebar">
+        <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <input type="text" id="searchInput" class="search-box" placeholder="파일명 검색...">
+                <div class="sidebar-actions">
+                    <button id="newFileBtn" title="새 파일">📄 새 파일</button>
+                    <button id="newFolderBtn" title="새 폴더">📂 새 폴더</button>
+                    <button id="refreshBtn" title="새로고침">🔄</button>
+                </div>
             </div>
             <div id="fileTree" class="tree-content">
-                <div class="empty-msg">프로젝트 폴더를<br>열어주세요.</div>
+                <div class="empty-msg">
+                    Chrome/Edge 브라우저 권장<br>
+                    '프로젝트 열기'를 눌러<br>
+                    작업 폴더를 선택하세요.
+                </div>
             </div>
         </aside>
 
@@ -193,11 +190,10 @@
                 <button data-cmd="details" title="Details">🔽</button>
                 <button data-cmd="table" title="Table Generator">📅</button>
                 <button data-cmd="link">🔗</button>
-                <button data-cmd="checkLinks" title="Link Validator" style="color:var(--primary);">✔️</button>
                 <button data-cmd="frontmatter" style="font-size: 11px; width: auto;">YAML</button>
             </div>
             <div class="editor-wrapper">
-                <textarea id="editor" placeholder="파일을 선택하거나 내용을 입력하세요..." spellcheck="false"></textarea>
+                <textarea id="editor" placeholder="파일을 선택하면 내용이 표시됩니다." spellcheck="false"></textarea>
                 <div class="status-bar">
                     <div class="stat-item" id="wordCount">단어: 0</div>
                     <div class="stat-item" id="charCount">글자: 0</div>
@@ -222,355 +218,347 @@
         </aside>
     </div>
 
-    <!-- Modals -->
+    <!-- UI Modals -->
     <div id="modalOverlay" class="modal-overlay">
-        <!-- Table Modal -->
+        <!-- New Item Modal -->
+        <div id="newItemModal" class="modal hidden">
+            <h3 id="modalTitle">새 항목 생성</h3>
+            <div class="modal-body">
+                <div class="input-group">
+                    <label>이름</label>
+                    <input type="text" id="newItemName" placeholder="filename.md or foldername">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" id="closeNewItemModal">취소</button>
+                <button class="btn primary" id="createItemBtn">생성</button>
+            </div>
+        </div>
+        <!-- Table Modal (Reuse) -->
         <div id="tableModal" class="modal hidden">
             <h3>표 생성하기</h3>
             <div class="modal-body">
-                <div class="input-group"><label>행(Row)</label><input type="number" id="tableRows" value="3" min="1"></div>
-                <div class="input-group"><label>열(Col)</label><input type="number" id="tableCols" value="3" min="1"></div>
+                <div class="input-group"><label>행</label><input type="number" id="tableRows" value="3"></div>
+                <div class="input-group"><label>열</label><input type="number" id="tableCols" value="3"></div>
             </div>
             <div class="modal-footer">
                 <button class="btn" id="closeTableModal">취소</button>
                 <button class="btn primary" id="insertTableBtn">삽입</button>
             </div>
         </div>
-        <!-- Link Validator Modal -->
-        <div id="linkModal" class="modal hidden">
-            <h3>링크 유효성 검사</h3>
-            <div class="modal-body" id="linkResults"></div>
-            <div class="modal-footer"><button class="btn" id="closeLinkModal">닫기</button></div>
-        </div>
+    </div>
+
+    <!-- Context Menu -->
+    <div id="ctxMenu" class="context-menu">
+        <div class="ctx-item delete" id="ctxDelete">🗑️ 삭제</div>
     </div>
 
     <script>
-        /**
-         * Docusaurus Editor Pro - Optimized Core
-         * - Namespace Pattern used for module separation
-         * - DOMPurify with WHITELIST for custom components
-         * - Robust path resolution for link checking
-         * - UX Improvements: Tab key indentation, Auto-close
-         */
         const App = {
             state: {
-                currentFile: null,
-                filesMap: {},
-                isSyncingLeft: false, isSyncingRight: false, isResizing: false,
-                isDirty: false
+                rootHandle: null, // Root Directory Handle
+                currentHandle: null, // Current File Handle
+                activeFolderHandle: null, // For creating new files
+                theme: localStorage.getItem('theme') || 'light',
+                isDirty: false,
+                isResizing: false,
+                contextTarget: null
             },
-
-            // UI Cache
             ui: {},
 
             init() {
                 this.cacheDOM();
                 this.Core.loadSettings();
                 this.Core.bindEvents();
-                
-                // Configure Marked (GFM enabled)
                 marked.setOptions({ gfm: true, breaks: true });
             },
 
             cacheDOM() {
                 const ids = [
-                    'container', 'editorArea', 'previewArea', 'resizer',
-                    'folderInput', 'searchInput', 'fileTree',
-                    'editor', 'preview', 'docHeader', 'toolbar',
-                    'themeToggle', 'saveBtn', 'spinner', 'tocList',
-                    'wordCount', 'charCount', 'readTime',
-                    'modalOverlay', 'tableModal', 'linkModal', 'linkResults',
-                    'tableRows', 'tableCols', 'insertTableBtn',
-                    'closeTableModal', 'closeLinkModal'
+                    'openFolderBtn', 'saveBtn', 'downloadBtn', 'fileTree', 'editor', 'preview', 
+                    'docHeader', 'toolbar', 'themeToggle', 'spinner', 'tocList',
+                    'wordCount', 'charCount', 'readTime', 'resizer', 'editorArea', 'container',
+                    'newFileBtn', 'newFolderBtn', 'refreshBtn',
+                    'modalOverlay', 'newItemModal', 'newItemName', 'createItemBtn', 'closeNewItemModal', 'modalTitle',
+                    'tableModal', 'tableRows', 'tableCols', 'insertTableBtn', 'closeTableModal',
+                    'ctxMenu', 'ctxDelete'
                 ];
                 ids.forEach(id => this.ui[id] = document.getElementById(id));
             },
 
-            /* --- Modules --- */
             Core: {
                 loadSettings() {
-                    const theme = localStorage.getItem('theme') || 'light';
-                    App.Utils.applyTheme(theme);
-                    const splitPos = localStorage.getItem('split-pos');
-                    if (splitPos) App.ui.editorArea.style.width = splitPos;
+                    App.Utils.applyTheme(App.state.theme);
                 },
-
                 bindEvents() {
                     const ui = App.ui;
                     
-                    // File & Search
-                    ui.folderInput.addEventListener('change', e => App.Sidebar.handleFolderOpen(e));
-                    ui.searchInput.addEventListener('input', e => App.Sidebar.handleSearch(e.target.value));
-
-                    // Editor
-                    ui.editor.addEventListener('input', App.Utils.debounce(e => {
+                    // File System
+                    ui.openFolderBtn.addEventListener('click', App.FS.openDirectory);
+                    ui.saveBtn.addEventListener('click', App.FS.saveFileToDisk); // Overwrite
+                    ui.downloadBtn.addEventListener('click', App.FS.downloadAsFile); // Export
+                    ui.refreshBtn.addEventListener('click', () => App.FS.refreshTree());
+                    
+                    // Create New
+                    ui.newFileBtn.addEventListener('click', () => App.FS.openCreateModal('file'));
+                    ui.newFolderBtn.addEventListener('click', () => App.FS.openCreateModal('folder'));
+                    ui.createItemBtn.addEventListener('click', App.FS.createItem);
+                    
+                    // Editor & Preview
+                    ui.editor.addEventListener('input', App.Utils.debounce((e) => {
                         App.state.isDirty = true;
                         App.Utils.updateSaveBtnState();
                         App.Preview.render(e.target.value);
                         App.Editor.updateStats(e.target.value);
                     }, 300));
-                    ui.editor.addEventListener('scroll', () => App.Utils.syncScroll('editor'));
                     ui.editor.addEventListener('keydown', e => {
-                        App.Editor.handleAutoClose(e);
-                        App.Editor.handleTabKey(e);
+                        App.Editor.handleTab(e);
+                        if((e.ctrlKey||e.metaKey) && e.key === 's') { e.preventDefault(); App.FS.saveFileToDisk(); }
                     });
+                    ui.editor.addEventListener('scroll', () => App.Utils.syncScroll('editor'));
+                    ui.preview.addEventListener('scroll', () => { App.Utils.syncScroll('preview'); App.TOC.highlight(); });
 
-                    // Preview
-                    ui.preview.addEventListener('scroll', () => {
-                        App.Utils.syncScroll('preview');
-                        App.TOC.highlight();
-                    });
-
-                    // Resizer
-                    ui.resizer.addEventListener('mousedown', e => App.Editor.startResize(e));
-                    document.addEventListener('mousemove', e => App.Editor.doResize(e));
-                    document.addEventListener('mouseup', () => App.Editor.stopResize());
-
-                    // Toolbar & Actions
-                    ui.toolbar.addEventListener('click', e => App.Editor.handleToolbar(e));
-                    ui.saveBtn.addEventListener('click', () => App.Editor.saveFile());
-                    ui.themeToggle.addEventListener('click', () => App.Utils.toggleTheme());
-                    
-                    // Shortcuts
-                    document.addEventListener('keydown', e => {
-                        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-                            e.preventDefault();
-                            App.Editor.saveFile();
-                        }
-                    });
+                    // Toolbar
+                    ui.toolbar.addEventListener('click', App.Editor.handleToolbar);
+                    ui.themeToggle.addEventListener('click', App.Utils.toggleTheme);
 
                     // Modals
-                    ui.insertTableBtn.addEventListener('click', () => App.Tools.insertTable());
-                    ui.closeTableModal.addEventListener('click', () => App.Tools.closeModals());
-                    ui.closeLinkModal.addEventListener('click', () => App.Tools.closeModals());
-                    ui.modalOverlay.addEventListener('click', e => { if(e.target === ui.modalOverlay) App.Tools.closeModals(); });
+                    ui.closeNewItemModal.addEventListener('click', App.Utils.closeModals);
+                    ui.closeTableModal.addEventListener('click', App.Utils.closeModals);
+                    ui.insertTableBtn.addEventListener('click', App.Editor.insertTable);
+                    ui.modalOverlay.addEventListener('click', (e) => { if(e.target === ui.modalOverlay) App.Utils.closeModals(); });
+
+                    // Context Menu
+                    document.addEventListener('click', () => ui.ctxMenu.style.display = 'none');
+                    ui.ctxDelete.addEventListener('click', App.FS.deleteItem);
+                }
+            },
+
+            FS: {
+                // 1. Open Directory
+                async openDirectory() {
+                    try {
+                        App.state.rootHandle = await window.showDirectoryPicker();
+                        App.state.activeFolderHandle = App.state.rootHandle; // Default active folder
+                        await App.FS.refreshTree();
+                    } catch (err) {
+                        console.error(err);
+                        if(err.name !== 'AbortError') alert('이 브라우저는 File System Access API를 지원하지 않거나 권한이 거부되었습니다.');
+                    }
+                },
+
+                // 2. Refresh Tree (Recursive)
+                async refreshTree() {
+                    if (!App.state.rootHandle) return;
+                    App.ui.fileTree.innerHTML = '';
+                    const tree = await App.FS.buildTree(App.state.rootHandle);
+                    App.ui.fileTree.appendChild(tree);
+                },
+
+                async buildTree(dirHandle, level = 0) {
+                    const ul = document.createElement('div');
+                    const entries = [];
+                    for await (const entry of dirHandle.values()) { entries.push(entry); }
+                    
+                    // Sort: Folders first
+                    entries.sort((a, b) => (a.kind === b.kind ? 0 : a.kind === 'directory' ? -1 : 1) || a.name.localeCompare(b.name));
+
+                    for (const entry of entries) {
+                        const div = document.createElement('div');
+                        div.className = 'tree-item';
+                        div.style.paddingLeft = `${level * 15 + 10}px`;
+                        
+                        const icon = entry.kind === 'directory' ? '📂' : (entry.name.endsWith('.json') ? '⚙️' : '📄');
+                        div.innerHTML = `<span>${icon}</span> ${entry.name}`;
+                        
+                        // Click Event
+                        div.onclick = (e) => {
+                            e.stopPropagation();
+                            if (entry.kind === 'directory') {
+                                App.state.activeFolderHandle = entry; // Set as target for new file
+                                // Toggle collapse (Simple implementation: refresh for now)
+                            } else {
+                                App.FS.loadFile(entry);
+                            }
+                            document.querySelectorAll('.tree-item').forEach(el => el.classList.remove('active'));
+                            div.classList.add('active');
+                        };
+
+                        // Context Menu
+                        div.oncontextmenu = (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            App.state.contextTarget = { handle: entry, parent: dirHandle };
+                            const menu = App.ui.ctxMenu;
+                            menu.style.display = 'block';
+                            menu.style.left = `${e.pageX}px`;
+                            menu.style.top = `${e.pageY}px`;
+                        };
+
+                        ul.appendChild(div);
+
+                        // Recursive for directory
+                        if (entry.kind === 'directory') {
+                            const children = await App.FS.buildTree(entry, level + 1);
+                            ul.appendChild(children);
+                        }
+                    }
+                    return ul;
+                },
+
+                // 3. Load File
+                async loadFile(fileHandle) {
+                    App.state.currentHandle = fileHandle;
+                    const file = await fileHandle.getFile();
+                    const text = await file.text();
+                    
+                    App.ui.editor.value = text;
+                    App.ui.editor.scrollTop = 0;
+                    App.state.isDirty = false;
+                    App.Utils.updateSaveBtnState();
+                    App.Preview.render(text);
+                    App.Editor.updateStats(text);
+                },
+
+                // 4. Save File (Overwrite)
+                async saveFileToDisk() {
+                    if (!App.state.currentHandle) return alert('저장할 파일이 없습니다. 폴더를 열고 파일을 선택해주세요.');
+                    try {
+                        const writable = await App.state.currentHandle.createWritable();
+                        await writable.write(App.ui.editor.value);
+                        await writable.close();
+                        App.state.isDirty = false;
+                        App.Utils.updateSaveBtnState();
+                    } catch (err) {
+                        alert('저장 실패: ' + err.message);
+                    }
+                },
+
+                // 5. Download File (Export)
+                downloadAsFile() {
+                    const content = App.ui.editor.value;
+                    if (!content) return alert('다운로드할 내용이 없습니다.');
+                    
+                    let filename = 'document.md';
+                    if (App.state.currentHandle) filename = App.state.currentHandle.name;
+                    
+                    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = filename;
+                    a.click();
+                    URL.revokeObjectURL(a.href);
+                },
+
+                // 6. Create New Item
+                openCreateModal(type) {
+                    if (!App.state.rootHandle) return alert('프로젝트 폴더를 먼저 열어주세요.');
+                    App.state.createType = type;
+                    App.ui.modalTitle.innerText = type === 'file' ? '새 파일 생성' : '새 폴더 생성';
+                    App.ui.modalOverlay.style.display = 'flex';
+                    App.ui.newItemModal.classList.remove('hidden');
+                    App.ui.tableModal.classList.add('hidden');
+                    App.ui.newItemName.focus();
+                },
+
+                async createItem() {
+                    const name = App.ui.newItemName.value.trim();
+                    if (!name) return;
+                    
+                    // Use active folder or root
+                    const targetDir = App.state.activeFolderHandle || App.state.rootHandle;
+
+                    try {
+                        if (App.state.createType === 'file') {
+                            await targetDir.getFileHandle(name, { create: true });
+                        } else {
+                            await targetDir.getDirectoryHandle(name, { create: true });
+                        }
+                        App.Utils.closeModals();
+                        App.FS.refreshTree();
+                    } catch (err) {
+                        alert('생성 실패: ' + err.message);
+                    }
+                },
+
+                // 7. Delete Item
+                async deleteItem() {
+                    const target = App.state.contextTarget;
+                    if (!target) return;
+                    if (!confirm(`'${target.handle.name}'을(를) 정말 삭제하시겠습니까?`)) return;
+
+                    try {
+                        await target.parent.removeEntry(target.handle.name, { recursive: true });
+                        App.ui.ctxMenu.style.display = 'none';
+                        if (App.state.currentHandle === target.handle) {
+                            App.ui.editor.value = '';
+                            App.state.currentHandle = null;
+                        }
+                        App.FS.refreshTree();
+                    } catch (err) {
+                        alert('삭제 실패: ' + err.message);
+                    }
                 }
             },
 
             Editor: {
                 handleToolbar(e) {
-                    const btn = e.target.closest('button'); if(!btn || !btn.dataset.cmd) return;
+                    const btn = e.target.closest('button'); if (!btn || !btn.dataset.cmd) return;
                     const cmd = btn.dataset.cmd;
+                    const ed = App.ui.editor;
+                    const { selectionStart: s, selectionEnd: end } = ed;
                     
-                    if(cmd === 'table') return App.Tools.openTableModal();
-                    if(cmd === 'checkLinks') return App.Tools.checkLinks();
+                    if(cmd === 'table') {
+                        App.ui.modalOverlay.style.display = 'flex';
+                        App.ui.tableModal.classList.remove('hidden');
+                        App.ui.newItemModal.classList.add('hidden');
+                        return;
+                    }
 
-                    const templates = {
-                        bold:['**','**'], italic:['*','*'], strike:['~~','~~'], h2:['## ',''], h3:['### ',''],
-                        code:['```\n','\n```'], link:['[','](url)'], admonition:[':::tip\n','\n:::'],
-                        tabs:['<Tabs>\n  <TabItem value="a" label="Tab A">\n    Content\n  </TabItem>\n</Tabs>',''],
-                        details:['<details>\n  <summary>Title</summary>\n  Content\n</details>',''],
-                        frontmatter:['---\nid: doc-id\ntitle: Title\n---\n\n','']
-                    };
-
-                    const t = templates[cmd];
-                    if(t) this.insertText(t[0], t[1]);
-                },
-
-                insertText(pre, post) {
-                    const el = App.ui.editor;
-                    const { selectionStart: s, selectionEnd: e, value: v } = el;
-                    el.setRangeText(pre + v.substring(s, e) + post, s, e, 'select');
-                    el.focus();
-                    App.state.isDirty = true;
-                    App.Utils.updateSaveBtnState();
-                    App.Preview.render(el.value);
-                    this.updateStats(el.value);
-                },
-
-                handleAutoClose(e) {
-                    const pairs = { '(': ')', '[': ']', '{': '}', '"': '"', "'": "'", '`': '`' };
-                    if (pairs[e.key]) {
-                        e.preventDefault();
-                        this.insertText(e.key, pairs[e.key]);
-                        // Move cursor inside
-                        App.ui.editor.selectionStart -= 1;
-                        App.ui.editor.selectionEnd -= 1;
+                    let t = { bold:['**','**'], italic:['*','*'], strike:['~~','~~'], h2:['## ',''], h3:['### ',''], code:['```\n','\n```'], link:['[','](url)'], admonition:[':::tip\n','\n:::'], tabs:['<Tabs>\n  <TabItem value="1" label="Tab 1">Content</TabItem>\n</Tabs>',''], details:['<details>\n<summary>Title</summary>\nContent\n</details>',''], frontmatter:['---\ntitle: Doc\n---\n\n',''] }[cmd];
+                    
+                    if(t) {
+                        ed.setRangeText(t[0] + ed.value.substring(s, end) + t[1], s, end, 'select');
+                        ed.focus();
+                        App.Preview.render(ed.value);
                     }
                 },
-
-                handleTabKey(e) {
-                    if (e.key === 'Tab') {
+                insertTable() {
+                    const r = parseInt(document.getElementById('tableRows').value) || 3;
+                    const c = parseInt(document.getElementById('tableCols').value) || 3;
+                    let txt = '\n| ' + Array(c).fill('Head').join(' | ') + ' |\n| ' + Array(c).fill('---').join(' | ') + ' |\n';
+                    for(let i=0; i<r; i++) txt += '| ' + Array(c).fill('Cell').join(' | ') + ' |\n';
+                    
+                    const ed = App.ui.editor;
+                    ed.setRangeText(txt + '\n', ed.selectionStart, ed.selectionEnd, 'end');
+                    App.Utils.closeModals();
+                    App.Preview.render(ed.value);
+                },
+                handleTab(e) {
+                    if(e.key === 'Tab') {
                         e.preventDefault();
-                        // Insert 2 spaces
                         document.execCommand('insertText', false, '  ');
                     }
                 },
-
                 updateStats(text) {
-                    const words = text.trim().split(/\s+/).filter(w=>w.length>0).length;
-                    App.ui.wordCount.innerText = `단어: ${words}`;
+                    const w = text.trim().split(/\s+/).filter(x=>x).length;
+                    App.ui.wordCount.innerText = `단어: ${w}`;
                     App.ui.charCount.innerText = `글자: ${text.length}`;
-                    App.ui.readTime.innerText = `읽기: ${Math.ceil(words/200)}분`;
-                },
-
-                saveFile() {
-                    if (!App.state.currentFile && !App.ui.editor.value) return alert('내용이 없습니다.');
-                    const blob = new Blob([App.ui.editor.value], { type: 'text/plain;charset=utf-8' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = App.state.currentFile ? App.state.currentFile.name : 'draft.md';
-                    a.click();
-                    setTimeout(() => URL.revokeObjectURL(url), 100);
-                    
-                    App.state.isDirty = false;
-                    App.Utils.updateSaveBtnState();
-                },
-
-                startResize(e) {
-                    e.preventDefault();
-                    App.state.isResizing = true;
-                    App.ui.resizer.classList.add('resizing');
-                    document.body.style.cursor = 'col-resize';
-                    document.body.style.userSelect = 'none';
-                },
-                doResize(e) {
-                    if (!App.state.isResizing) return;
-                    requestAnimationFrame(() => {
-                        const container = App.ui.container.getBoundingClientRect();
-                        const availableW = container.width - 240 - 220; // Sidebar + TOC
-                        const mouseX = e.clientX - container.left - 240;
-                        let pct = (mouseX / availableW) * 100;
-                        if (pct < 20) pct = 20; if (pct > 80) pct = 80;
-                        App.ui.editorArea.style.width = `${pct}%`;
-                    });
-                },
-                stopResize() {
-                    if (App.state.isResizing) {
-                        App.state.isResizing = false;
-                        App.ui.resizer.classList.remove('resizing');
-                        document.body.style.cursor = 'default';
-                        document.body.style.userSelect = 'auto';
-                        localStorage.setItem('split-pos', App.ui.editorArea.style.width);
-                    }
+                    App.ui.readTime.innerText = `읽기: ${Math.ceil(w/200)}분`;
                 }
             },
 
             Preview: {
                 render(text) {
-                    App.Utils.toggleLoading(true);
-                    setTimeout(() => {
-                        try {
-                            const isJson = App.state.currentFile && App.state.currentFile.name.endsWith('.json');
-                            if (isJson) {
-                                App.ui.docHeader.innerText = App.state.currentFile.name;
-                                App.ui.preview.innerHTML = `<pre><code class="language-json">${text}</code></pre>`;
-                                App.ui.tocList.innerHTML = '';
-                            } else {
-                                const { title, body } = this.parseFrontMatter(text);
-                                App.ui.docHeader.innerText = title || (App.state.currentFile ? App.state.currentFile.name : 'Untitled');
-                                
-                                let html = marked.parse(body);
-                                html = this.parseAdmonitions(html);
-                                
-                                // DOMPurify: Allow Docusaurus custom tags and attributes
-                                html = DOMPurify.sanitize(html, { 
-                                    ADD_TAGS: ['tabs', 'tabitem', 'details', 'summary'],
-                                    ADD_ATTR: ['value', 'label', 'target', 'class']
-                                });
-                                
-                                App.ui.preview.innerHTML = html;
-                                this.transformTabs();
-                                App.TOC.generate();
-                            }
-                            App.ui.preview.querySelectorAll('pre code').forEach(hljs.highlightElement);
-                        } catch (e) { console.error(e); } 
-                        finally { App.Utils.toggleLoading(false); }
-                    }, 0);
-                },
-
-                parseFrontMatter(text) {
-                    const match = text.match(/^---\n([\s\S]+?)\n---/);
-                    if(match) {
-                        try {
-                            const fm = jsyaml.load(match[1]);
-                            return { title: fm.title || fm.id, body: text.replace(match[0], '') };
-                        } catch(e){}
-                    }
-                    return { title: null, body: text };
-                },
-
-                parseAdmonitions(html) {
-                    // Optimized regex to handle cases where <p> might be missing or different
-                    return html.replace(/(?:<p>)?:::(note|tip|info|warning|danger)([\s\S]*?):::(?:<\/p>)?/g, 
-                        (m, t, c) => `<div class="admonition ${t}"><span class="admonition-title">${t}</span>${c.trim().replace(/^<br>/,'')}</div>`);
-                },
-
-                transformTabs() {
-                    App.ui.preview.querySelectorAll('tabs').forEach(el => {
-                        const items = el.querySelectorAll('tabitem'); if(!items.length) return;
-                        const c = document.createElement('div'); c.className = 'tabs-container';
-                        const nav = document.createElement('ul'); nav.className = 'tabs-nav';
-                        items.forEach((item, i) => {
-                            const btn = document.createElement('button');
-                            btn.className = `tab-btn ${i===0?'active':''}`;
-                            btn.innerText = item.getAttribute('label') || item.getAttribute('value') || `Tab ${i+1}`;
-                            btn.onclick = () => this.switchTab(c, i);
-                            nav.appendChild(btn);
-                            const p = document.createElement('div');
-                            p.className = `tab-panel ${i===0?'active':''}`;
-                            p.innerHTML = item.innerHTML;
-                            c.appendChild(p);
-                        });
-                        c.insertBefore(nav, c.firstChild);
-                        el.replaceWith(c);
-                    });
-                },
-
-                switchTab(c, i) {
-                    c.querySelectorAll('.tab-btn').forEach((b, idx) => b.classList.toggle('active', idx === i));
-                    c.querySelectorAll('.tab-panel').forEach((p, idx) => p.classList.toggle('active', idx === i));
-                }
-            },
-
-            Sidebar: {
-                handleFolderOpen(e) {
-                    const files = Array.from(e.target.files);
-                    if(!files.length) return;
-                    App.ui.fileTree.innerHTML = '';
-                    App.state.filesMap = {};
-                    
-                    const valid = files.filter(f => /\.(md|mdx|json)$/.test(f.name))
-                                       .sort((a,b) => a.webkitRelativePath.localeCompare(b.webkitRelativePath));
-                    
-                    if(!valid.length) { App.ui.fileTree.innerHTML = '<div class="empty-msg">파일이 없습니다.</div>'; return; }
-
-                    const frag = document.createDocumentFragment();
-                    valid.forEach(file => {
-                        App.state.filesMap[file.webkitRelativePath] = file;
-                        const div = document.createElement('div');
-                        div.className = 'tree-item';
-                        const depth = Math.max(0, file.webkitRelativePath.split('/').length - 2);
-                        div.style.paddingLeft = `${depth * 15 + 16}px`;
-                        div.innerHTML = `<span>${file.name.endsWith('.json')?'⚙️':'📄'}</span> ${file.name}`;
-                        div.onclick = () => this.loadFile(file, div);
-                        frag.appendChild(div);
-                    });
-                    App.ui.fileTree.appendChild(frag);
-                },
-
-                loadFile(file, domEl) {
-                    document.querySelectorAll('.tree-item').forEach(el => el.classList.remove('active'));
-                    if(domEl) domEl.classList.add('active');
-                    
-                    App.state.currentFile = file;
-                    App.state.isDirty = false;
-                    App.Utils.updateSaveBtnState();
-
-                    const r = new FileReader();
-                    r.onload = e => {
-                        App.ui.editor.value = e.target.result;
-                        App.ui.editor.scrollTop = 0;
-                        App.Preview.render(e.target.result);
-                        App.Editor.updateStats(e.target.result);
-                    };
-                    r.readAsText(file);
-                },
-
-                handleSearch(k) {
-                    App.ui.fileTree.querySelectorAll('.tree-item').forEach(i => 
-                        i.style.display = i.innerText.toLowerCase().includes(k.toLowerCase()) ? 'flex' : 'none');
+                    const { title, body } = App.Utils.parseFM(text);
+                    App.ui.docHeader.innerText = title || (App.state.currentHandle ? App.state.currentHandle.name : 'Untitled');
+                    let html = marked.parse(body);
+                    html = html.replace(/<p>:::(note|tip|info|warning|danger)([\s\S]*?):::<\/p>/g, (m,t,c)=>`<div class="admonition ${t}"><span class="admonition-title">${t}</span>${c}</div>`);
+                    html = DOMPurify.sanitize(html, { ADD_TAGS: ['tabs','tabitem','details','summary'], ADD_ATTR:['value','label'] });
+                    App.ui.preview.innerHTML = html;
+                    App.Utils.transformTabs();
+                    App.TOC.generate();
+                    App.ui.preview.querySelectorAll('pre code').forEach(hljs.highlightElement);
                 }
             },
 
@@ -578,134 +566,74 @@
                 generate() {
                     const h = App.ui.preview.querySelectorAll('h1, h2, h3');
                     App.ui.tocList.innerHTML = '';
-                    if(!h.length) return;
-                    
-                    const frag = document.createDocumentFragment();
-                    h.forEach((header, i) => {
-                        if(!header.id) header.id = `h-${i}`;
-                        const li = document.createElement('li'); 
-                        li.className = 'toc-item';
+                    h.forEach((el, i) => {
+                        if(!el.id) el.id = `h-${i}`;
+                        const li = document.createElement('li');
                         const a = document.createElement('a');
-                        a.className = `toc-link toc-${header.tagName.toLowerCase()}`;
-                        a.innerText = header.innerText;
-                        a.href = `#${header.id}`;
-                        a.dataset.target = header.id;
-                        a.onclick = e => { 
-                            e.preventDefault(); 
-                            header.scrollIntoView({ behavior: 'smooth' }); 
-                        };
+                        a.className = `toc-link toc-${el.tagName.toLowerCase()}`;
+                        a.innerText = el.innerText;
+                        a.href = `#${el.id}`;
+                        a.dataset.target = el.id;
+                        a.onclick = (e) => { e.preventDefault(); el.scrollIntoView({behavior:'smooth'}); };
                         li.appendChild(a);
-                        frag.appendChild(li);
+                        App.ui.tocList.appendChild(li);
                     });
-                    App.ui.tocList.appendChild(frag);
                 },
-
                 highlight() {
                     const pos = App.ui.preview.scrollTop + 80;
                     let id = null;
-                    App.ui.preview.querySelectorAll('h1, h2, h3').forEach(h => {
-                        if(h.offsetTop <= pos) id = h.id;
-                    });
-                    App.ui.tocList.querySelectorAll('.toc-link').forEach(l => 
-                        l.classList.toggle('active', l.dataset.target === id));
-                }
-            },
-
-            Tools: {
-                openTableModal() {
-                    App.ui.modalOverlay.style.display = 'flex';
-                    App.ui.tableModal.classList.remove('hidden');
-                    App.ui.linkModal.classList.add('hidden');
-                },
-                closeModals() {
-                    App.ui.modalOverlay.style.display = 'none';
-                    App.ui.tableModal.classList.add('hidden');
-                    App.ui.linkModal.classList.add('hidden');
-                },
-                insertTable() {
-                    const r = parseInt(App.ui.tableRows.value) || 3;
-                    const c = parseInt(App.ui.tableCols.value) || 3;
-                    let t = '\n| ' + Array(c).fill('Head').join(' | ') + ' |\n| ' + Array(c).fill('---').join(' | ') + ' |\n';
-                    for(let i=0; i<r; i++) t += '| ' + Array(c).fill('Cell').join(' | ') + ' |\n';
-                    App.Editor.insertText(t + '\n', '');
-                    this.closeModals();
-                },
-                checkLinks() {
-                    if(!App.state.currentFile) return alert('파일을 먼저 열어주세요.');
-                    const text = App.ui.editor.value;
-                    const regex = /\[.*?\]\((.*?)\)|!\[.*?\]\((.*?)\)/g;
-                    let m, results = [];
-                    const curPath = App.state.currentFile.webkitRelativePath;
-                    const curDir = curPath.substring(0, curPath.lastIndexOf('/'));
-
-                    while((m = regex.exec(text)) !== null) {
-                        const link = m[1] || m[2];
-                        if(!link || link.startsWith('http') || link.startsWith('#')) continue;
-                        
-                        let target = App.Utils.resolvePath(curDir, link);
-                        // try matching (loose match for root folder name diff)
-                        const exists = Object.keys(App.state.filesMap).some(p => p.endsWith(target));
-                        results.push({ link, exists });
-                    }
-                    this.showLinkResults(results);
-                },
-                showLinkResults(list) {
-                    App.ui.modalOverlay.style.display = 'flex';
-                    App.ui.linkModal.classList.remove('hidden');
-                    App.ui.tableModal.classList.add('hidden');
-                    const el = App.ui.linkResults;
-                    if(!list.length) { el.innerHTML = '<p>검사할 내부 링크가 없습니다.</p>'; return; }
-                    el.innerHTML = list.map(r => 
-                        `<div class="link-item"><span>${r.link}</span><span class="${r.exists?'valid-link':'invalid-link'}">${r.exists?'Valid':'Invalid'}</span></div>`
-                    ).join('');
+                    App.ui.preview.querySelectorAll('h1, h2, h3').forEach(el => { if(el.offsetTop <= pos) id = el.id; });
+                    App.ui.tocList.querySelectorAll('a').forEach(a => a.classList.toggle('active', a.dataset.target === id));
                 }
             },
 
             Utils: {
-                resolvePath(currentDir, relativePath) {
-                    if (relativePath.startsWith('/')) return relativePath.substring(1);
-                    const parts = (currentDir + '/' + relativePath).split('/');
-                    const stack = [];
-                    for(const p of parts) {
-                        if(p==='..') stack.pop();
-                        else if(p!=='.' && p!=='') stack.push(p);
-                    }
-                    return stack.join('/');
-                },
                 toggleTheme() {
-                    const t = localStorage.getItem('theme') === 'dark' ? 'light' : 'dark';
+                    const t = App.state.theme === 'dark' ? 'light' : 'dark';
+                    App.state.theme = t;
                     localStorage.setItem('theme', t);
-                    this.applyTheme(t);
+                    App.Utils.applyTheme(t);
                 },
                 applyTheme(t) {
                     document.body.classList.toggle('dark-mode', t === 'dark');
-                    App.ui.themeBtn.innerText = t === 'dark' ? '☀️' : '🌙';
+                    App.ui.themeToggle.innerText = t === 'dark' ? '☀️' : '🌙';
                 },
-                toggleLoading(show) {
-                    App.ui.spinner.classList.toggle('hidden', !show);
-                },
-                debounce(fn, wait) {
-                    let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn.apply(this, a), wait); };
-                },
+                debounce(fn, delay) { let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn.apply(this, args), delay); } },
                 syncScroll(src) {
                     const { editor, preview } = App.ui;
-                    if(src === 'editor') {
-                        if(App.state.isSyncingLeft) return;
-                        App.state.isSyncingRight = true;
-                        const r = editor.scrollTop / (editor.scrollHeight - editor.clientHeight);
-                        preview.scrollTop = r * (preview.scrollHeight - preview.clientHeight);
-                        setTimeout(() => App.state.isSyncingRight = false, 50);
-                    } else {
-                        if(App.state.isSyncingRight) return;
-                        App.state.isSyncingLeft = true;
-                        const r = preview.scrollTop / (preview.scrollHeight - preview.clientHeight);
-                        editor.scrollTop = r * (editor.scrollHeight - editor.clientHeight);
-                        setTimeout(() => App.state.isSyncingLeft = false, 50);
-                    }
+                    // Simple sync logic
+                    if(src === 'editor') preview.scrollTop = (editor.scrollTop / (editor.scrollHeight - editor.clientHeight)) * (preview.scrollHeight - preview.clientHeight);
+                    else editor.scrollTop = (preview.scrollTop / (preview.scrollHeight - preview.clientHeight)) * (editor.scrollHeight - editor.clientHeight);
                 },
                 updateSaveBtnState() {
-                    if (App.state.isDirty) App.ui.saveBtn.classList.add('dirty');
-                    else App.ui.saveBtn.classList.remove('dirty');
+                    App.ui.saveBtn.classList.toggle('dirty', App.state.isDirty);
+                },
+                closeModals() {
+                    App.ui.modalOverlay.style.display = 'none';
+                    document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'));
+                },
+                parseFM(text) {
+                    const m = text.match(/^---\n([\s\S]+?)\n---/);
+                    if(m) { try{ const fm=jsyaml.load(m[1]); return {title:fm.title||fm.id, body:text.replace(m[0],'')}; }catch(e){} }
+                    return {title:null, body:text};
+                },
+                transformTabs() {
+                    App.ui.preview.querySelectorAll('tabs').forEach(el => {
+                        const items = el.querySelectorAll('tabitem'); if(!items.length) return;
+                        const c = document.createElement('div'); c.className='tabs-container';
+                        const nav = document.createElement('ul'); nav.className='tabs-nav';
+                        items.forEach((item,i)=>{
+                            const btn=document.createElement('button'); btn.className=`tab-btn ${i===0?'active':''}`;
+                            btn.innerText=item.getAttribute('label')||item.getAttribute('value')||`Tab ${i+1}`;
+                            btn.onclick=()=>{
+                                c.querySelectorAll('.tab-btn').forEach((b,idx)=>b.classList.toggle('active',idx===i));
+                                c.querySelectorAll('.tab-panel').forEach((p,idx)=>p.classList.toggle('active',idx===i));
+                            };
+                            nav.appendChild(btn);
+                            const p=document.createElement('div'); p.className=`tab-panel ${i===0?'active':''}`; p.innerHTML=item.innerHTML; c.appendChild(p);
+                        });
+                        c.insertBefore(nav,c.firstChild); el.replaceWith(c);
+                    });
                 }
             }
         };
