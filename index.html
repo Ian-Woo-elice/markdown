@@ -135,11 +135,16 @@
         #preview img { max-width: 100%; border-radius: 6px; }
 
         /* JSON Preview Style */
-        .category-preview h1 { font-size: 1.5em; border-bottom: 2px solid var(--primary); padding-bottom: 10px; margin-bottom: 20px; color: var(--text-main); }
-        .category-preview p { margin-bottom: 10px; color: var(--text-main); }
-        .category-preview strong { color: var(--primary); }
-        .link-config { margin-top: 15px; padding: 15px; background: var(--bg-main); border-radius: 6px; border: 1px solid var(--border); }
-        .link-config h3 { margin-top: 0; font-size: 1.1em; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1px; }
+        .category-card { border: 1px solid var(--border); border-radius: 8px; background: var(--bg-sidebar); padding: 0; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .card-header { padding: 20px; background: var(--bg-main); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+        .folder-icon { font-size: 2em; }
+        .card-header h2 { margin: 0; font-size: 1.4em; color: var(--text-main); border: none; padding: 0; }
+        .card-body { padding: 20px; }
+        .description { font-size: 1.1em; color: var(--text-sub); margin-bottom: 20px; line-height: 1.6; }
+        .meta-grid { display: flex; gap: 12px; flex-wrap: wrap; }
+        .meta-tag { background: var(--code-bg); padding: 6px 12px; border-radius: 20px; font-size: 0.9em; border: 1px solid var(--border); color: var(--text-main); display: flex; align-items: center; gap: 6px; }
+        .meta-tag strong { color: var(--primary); }
+        .json-source-view h3 { font-size: 1.1em; color: var(--text-sub); border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-top: 30px; }
 
         /* Modals & Utils */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--overlay); display: none; justify-content: center; align-items: center; z-index: 1000; }
@@ -156,7 +161,7 @@
         @keyframes spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
         
         /* Context Menu */
-        .context-menu { position: absolute; background: var(--bg-modal); border: 1px solid var(--border); box-shadow: 0 2px 10px rgba(0,0,0,0.2); border-radius: 4px; z-index: 2000; display: none; width: 120px; }
+        .context-menu { position: absolute; background: var(--bg-modal); border: 1px solid var(--border); box-shadow: 0 2px 10px rgba(0,0,0,0.2); border-radius: 4px; z-index: 2000; display: none; width: 140px; }
         .ctx-item { padding: 8px 12px; cursor: pointer; font-size: 13px; color: var(--text-main); }
         .ctx-item:hover { background: var(--primary-light); color: var(--primary); }
         .ctx-item.delete { color: var(--danger-border); }
@@ -244,6 +249,7 @@
 
     <!-- Modals -->
     <div id="modalOverlay" class="modal-overlay">
+        <!-- New Item Modal -->
         <div id="newItemModal" class="modal hidden">
             <h3 id="modalTitle">새 항목 생성</h3>
             <div class="modal-body">
@@ -251,9 +257,10 @@
             </div>
             <div class="modal-footer">
                 <button class="btn" id="closeNewItemModal">취소</button>
-                <button class="btn primary" id="createItemBtn">생성</button>
+                <button class="btn primary" id="createItemBtn">확인</button>
             </div>
         </div>
+        <!-- Table Modal (Reuse) -->
         <div id="tableModal" class="modal hidden">
             <h3>표 생성하기</h3>
             <div class="modal-body">
@@ -265,9 +272,21 @@
                 <button class="btn primary" id="insertTableBtn">삽입</button>
             </div>
         </div>
+        <!-- Rename Modal -->
+        <div id="renameModal" class="modal hidden">
+            <h3>이름 변경</h3>
+            <div class="modal-body">
+                <div class="input-group"><label>새 이름</label><input type="text" id="renameInput"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" id="closeRenameModal">취소</button>
+                <button class="btn primary" id="renameBtn">변경</button>
+            </div>
+        </div>
     </div>
 
     <div id="ctxMenu" class="context-menu">
+        <div class="ctx-item" id="ctxRename">✏️ 이름 변경</div>
         <div class="ctx-item delete" id="ctxDelete">🗑️ 삭제</div>
     </div>
 
@@ -277,7 +296,8 @@
                 rootHandle: null, currentHandle: null, activeFolderHandle: null,
                 theme: localStorage.getItem('theme') || 'light',
                 isDirty: false, isResizing: false, contextTarget: null, dragSource: null, 
-                autoSave: localStorage.getItem('autoSave') === 'true' // Load setting
+                autoSave: localStorage.getItem('autoSave') === 'true',
+                createType: null // 'file', 'folder', or 'rename'
             },
             ui: {},
 
@@ -295,7 +315,9 @@
                     'wordCount', 'charCount', 'readTime', 'resizer', 'editorArea', 'container',
                     'newFileBtn', 'newFolderBtn', 'refreshBtn', 'autoSaveToggle', 'statusMsg',
                     'modalOverlay', 'newItemModal', 'newItemName', 'createItemBtn', 'closeNewItemModal', 'modalTitle',
-                    'tableModal', 'tableRows', 'tableCols', 'insertTableBtn', 'closeTableModal', 'ctxMenu', 'ctxDelete'
+                    'tableModal', 'tableRows', 'tableCols', 'insertTableBtn', 'closeTableModal', 
+                    'ctxMenu', 'ctxDelete', 'ctxRename',
+                    'renameModal', 'renameInput', 'renameBtn', 'closeRenameModal'
                 ];
                 ids.forEach(id => this.ui[id] = document.getElementById(id));
             },
@@ -353,11 +375,14 @@
 
                     ui.closeNewItemModal.addEventListener('click', App.Utils.closeModals);
                     ui.closeTableModal.addEventListener('click', App.Utils.closeModals);
+                    ui.closeRenameModal.addEventListener('click', App.Utils.closeModals);
                     ui.insertTableBtn.addEventListener('click', App.Editor.insertTable);
+                    ui.renameBtn.addEventListener('click', App.FS.renameItem);
                     ui.modalOverlay.addEventListener('click', (e) => { if(e.target === ui.modalOverlay) App.Utils.closeModals(); });
 
                     document.addEventListener('click', () => ui.ctxMenu.style.display = 'none');
                     ui.ctxDelete.addEventListener('click', App.FS.deleteItem);
+                    ui.ctxRename.addEventListener('click', App.FS.openRenameModal);
 
                     // --- Event Delegation for File Tree ---
                     ui.fileTree.addEventListener('click', (e) => {
@@ -407,11 +432,9 @@
                         e.preventDefault(); e.stopPropagation();
                         const item = e.target.closest('.tree-item');
                         
-                        // Dragging over a directory item
                         if (item && item.dataset.kind === 'directory') {
                             item.classList.add('drag-over');
                         } else if (App.state.rootHandle) {
-                            // Dragging over empty space (Root)
                             ui.fileTree.classList.add('drag-over');
                         }
                     });
@@ -428,14 +451,14 @@
                         document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
 
                         const targetItem = e.target.closest('.tree-item');
-                        let destDir = App.state.rootHandle; // Default to root
+                        let destDir = App.state.rootHandle;
 
                         if (targetItem && targetItem.dataset.kind === 'directory') {
                             destDir = targetItem._handle;
                         }
 
                         if (App.state.dragSource && destDir) {
-                            await App.FS.moveEntry(App.state.dragSource, destDir);
+                            await App.FS.transferEntry(App.state.dragSource, destDir);
                         }
                     });
                 }
@@ -467,11 +490,10 @@
                         div.style.paddingLeft = `${level * 15 + 10}px`;
                         div.innerHTML = `<span>${entry.kind==='directory'?'📂':(entry.name.endsWith('.json')?'⚙️':'📄')}</span> ${entry.name}`;
                         
-                        // Metadata for Event Delegation
                         div.dataset.kind = entry.kind;
                         div._handle = entry;
                         div._parent = dirHandle;
-                        div.setAttribute('draggable', 'true'); // Enable drag
+                        div.setAttribute('draggable', 'true');
 
                         ul.appendChild(div);
                         if (entry.kind === 'directory') {
@@ -533,8 +555,19 @@
                     App.ui.modalTitle.innerText = type === 'file' ? '새 파일' : '새 폴더';
                     App.ui.modalOverlay.style.display = 'flex';
                     App.ui.newItemModal.classList.remove('hidden');
+                    App.ui.renameModal.classList.add('hidden');
                     App.ui.tableModal.classList.add('hidden');
+                    App.ui.newItemName.value = '';
                     App.ui.newItemName.focus();
+                },
+                openRenameModal() {
+                    if(!App.state.contextTarget) return;
+                    App.ui.renameInput.value = App.state.contextTarget.handle.name;
+                    App.ui.modalOverlay.style.display = 'flex';
+                    App.ui.renameModal.classList.remove('hidden');
+                    App.ui.newItemModal.classList.add('hidden');
+                    App.ui.tableModal.classList.add('hidden');
+                    App.ui.renameInput.focus();
                 },
                 async createItem() {
                     const name = App.ui.newItemName.value.trim();
@@ -556,28 +589,54 @@
                         App.FS.refreshTree();
                     } catch(e) { alert('삭제 실패: ' + e.message); }
                 },
-                async moveEntry(src, destDir) {
+                // [NEW] Rename Logic (Same directory move)
+                async renameItem() {
+                    const newName = App.ui.renameInput.value.trim();
+                    const target = App.state.contextTarget;
+                    if(!newName || !target) return;
+                    if(newName === target.handle.name) return App.Utils.closeModals();
+
+                    try {
+                        // Pass parent handle as destination to simulate rename in place
+                        await App.FS.transferEntry({ handle: target.handle, parent: target.parent }, target.parent, newName);
+                        App.Utils.closeModals();
+                        // App.FS.refreshTree(); // Called inside transferEntry
+                    } catch(e) { alert('이름 변경 실패: ' + e.message); }
+                },
+                // [UPDATED] Unified Transfer Logic (Move/Rename)
+                async transferEntry(src, destDirHandle, newName = null) {
                     const { handle: s, parent: sp } = src;
-                    if(s === destDir || sp === destDir) return;
-                    if(!confirm(`'${s.name}' 이동하시겠습니까?`)) return;
+                    const name = newName || s.name;
+                    
+                    // Validation
+                    if(!newName) { // Move operation validation
+                        if(s === destDirHandle || sp === destDirHandle) return;
+                        if(!confirm(`'${s.name}' 이동하시겠습니까?`)) return;
+                    }
+
                     App.Utils.toggleLoading(true);
                     try {
-                        const copy = async (srcH, dstH) => {
+                        const copy = async (srcH, dstH, targetName) => {
                             if(srcH.kind === 'file') {
                                 const f = await srcH.getFile();
-                                const nf = await dstH.getFileHandle(srcH.name, { create: true });
+                                const nf = await dstH.getFileHandle(targetName, { create: true });
                                 const w = await nf.createWritable();
                                 await w.write(f); await w.close();
                             } else {
-                                const nd = await dstH.getDirectoryHandle(srcH.name, { create: true });
-                                for await (const e of srcH.values()) await copy(e, nd);
+                                const nd = await dstH.getDirectoryHandle(targetName, { create: true });
+                                for await (const e of srcH.values()) await copy(e, nd, e.name);
                             }
                         };
-                        await copy(s, destDir);
+                        
+                        await copy(s, destDirHandle, name);
                         await sp.removeEntry(s.name, { recursive: true });
                         await App.FS.refreshTree();
                         App.state.dragSource = null;
-                    } catch(e) { alert('이동 실패'); } finally { App.Utils.toggleLoading(false); }
+                        App.state.contextTarget = null;
+                    } catch(e) { 
+                        alert('작업 실패: ' + e.message); 
+                        console.error(e);
+                    } finally { App.Utils.toggleLoading(false); }
                 }
             },
 
@@ -630,25 +689,28 @@
                         
                         try {
                             const data = JSON.parse(text);
-                            if (data.label || data.link) {
-                                let html = `<div class="category-preview" style="padding:20px;border:1px solid var(--border);border-radius:8px;background:var(--bg-sidebar);">`;
-                                html += `<h1 style="margin-top:0;font-size:1.5em;border-bottom:2px solid var(--primary);padding-bottom:10px;margin-bottom:20px;color:var(--text-main);">📂 Category: ${data.label || 'Untitled'}</h1>`;
-                                if (data.position) html += `<p style="margin-bottom:10px;color:var(--text-main);"><strong>Position:</strong> ${data.position}</p>`;
-                                if (data.collapsible === false) html += `<p style="margin-bottom:10px;color:var(--text-main);"><strong>Collapsible:</strong> False</p>`;
-                                if (data.link) {
-                                    html += `<div style="margin-top:15px;padding:15px;background:var(--bg-main);border-radius:6px;border:1px solid var(--border);">`;
-                                    html += `<h3 style="margin-top:0;font-size:1.1em;color:var(--text-sub);text-transform:uppercase;">🔗 Link Config</h3>`;
-                                    html += `<p><strong>Type:</strong> ${data.link.type || 'N/A'}</p>`;
-                                    if (data.link.description) html += `<p><strong>Description:</strong> ${data.link.description}</p>`;
-                                    html += `</div>`;
-                                }
-                                html += `</div><h3 style="margin-top:30px;">Source</h3><pre><code class="language-json">${App.Utils.escapeHtml(text)}</code></pre>`;
+                            // Enhanced Category Card
+                            if (data.label || (data.link && data.link.type === 'generated-index')) {
+                                let html = `<div class="category-card">
+                                    <div class="card-header"><span class="folder-icon">📂</span><h2>${App.Utils.escapeHtml(data.label || 'Untitled Category')}</h2></div>
+                                    <div class="card-body">`;
+                                
+                                if (data.link && data.link.description) html += `<p class="description">${App.Utils.escapeHtml(data.link.description)}</p>`;
+                                
+                                html += `<div class="meta-grid">`;
+                                if (data.position) html += `<span class="meta-tag"><strong>#</strong> Position: ${data.position}</span>`;
+                                if (data.collapsible !== undefined) html += `<span class="meta-tag"><strong>↕</strong> Collapsible: ${data.collapsible}</span>`;
+                                if (data.collapsed !== undefined) html += `<span class="meta-tag"><strong>👁</strong> Collapsed: ${data.collapsed}</span>`;
+                                if (data.className) html += `<span class="meta-tag"><strong>✨</strong> Class: ${data.className}</span>`;
+                                html += `</div></div></div>`;
+                                
+                                html += `<div class="json-source-view"><h3>Raw Source</h3><pre><code class="language-json">${App.Utils.escapeHtml(text)}</code></pre></div>`;
                                 App.ui.preview.innerHTML = html;
                             } else {
                                 App.ui.preview.innerHTML = `<pre><code class="language-json">${App.Utils.escapeHtml(text)}</code></pre>`;
                             }
                         } catch (e) {
-                            App.ui.preview.innerHTML = `<div style="color:var(--danger-border)">Invalid JSON</div><pre><code class="language-json">${App.Utils.escapeHtml(text)}</code></pre>`;
+                            App.ui.preview.innerHTML = `<div class="admonition danger"><span class="admonition-title">JSON Syntax Error</span>${e.message}</div><pre><code class="language-json">${App.Utils.escapeHtml(text)}</code></pre>`;
                         }
                     } else {
                         const { title, body } = App.Utils.parseFM(text);
