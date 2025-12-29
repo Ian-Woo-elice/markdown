@@ -134,6 +134,13 @@
         #preview blockquote { border-left: 4px solid var(--primary); padding-left: 16px; margin: 0 0 16px; background: var(--primary-light); }
         #preview img { max-width: 100%; border-radius: 6px; }
 
+        /* JSON Preview Style */
+        .category-preview h1 { font-size: 1.5em; border-bottom: 2px solid var(--primary); padding-bottom: 10px; margin-bottom: 20px; color: var(--text-main); }
+        .category-preview p { margin-bottom: 10px; color: var(--text-main); }
+        .category-preview strong { color: var(--primary); }
+        .link-config { margin-top: 15px; padding: 15px; background: var(--bg-main); border-radius: 6px; border: 1px solid var(--border); }
+        .link-config h3 { margin-top: 0; font-size: 1.1em; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1px; }
+
         /* Modals & Utils */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--overlay); display: none; justify-content: center; align-items: center; z-index: 1000; }
         .modal { background: var(--bg-modal); padding: 24px; border-radius: 8px; width: 400px; border: 1px solid var(--border); box-shadow: 0 10px 25px rgba(0,0,0,0.3); color: var(--text-main); }
@@ -615,14 +622,34 @@
 
             Preview: {
                 render(text) {
-                    // Check for JSON file
                     const isJson = App.state.currentHandle && App.state.currentHandle.name.endsWith('.json');
                     
                     if (isJson) {
                         App.ui.docHeader.innerText = App.state.currentHandle.name;
-                        App.ui.preview.innerHTML = `<pre><code class="language-json"></code></pre>`;
-                        App.ui.preview.querySelector('code').textContent = text;
                         App.ui.tocList.innerHTML = '';
+                        
+                        try {
+                            const data = JSON.parse(text);
+                            if (data.label || data.link) {
+                                let html = `<div class="category-preview" style="padding:20px;border:1px solid var(--border);border-radius:8px;background:var(--bg-sidebar);">`;
+                                html += `<h1 style="margin-top:0;font-size:1.5em;border-bottom:2px solid var(--primary);padding-bottom:10px;margin-bottom:20px;color:var(--text-main);">📂 Category: ${data.label || 'Untitled'}</h1>`;
+                                if (data.position) html += `<p style="margin-bottom:10px;color:var(--text-main);"><strong>Position:</strong> ${data.position}</p>`;
+                                if (data.collapsible === false) html += `<p style="margin-bottom:10px;color:var(--text-main);"><strong>Collapsible:</strong> False</p>`;
+                                if (data.link) {
+                                    html += `<div style="margin-top:15px;padding:15px;background:var(--bg-main);border-radius:6px;border:1px solid var(--border);">`;
+                                    html += `<h3 style="margin-top:0;font-size:1.1em;color:var(--text-sub);text-transform:uppercase;">🔗 Link Config</h3>`;
+                                    html += `<p><strong>Type:</strong> ${data.link.type || 'N/A'}</p>`;
+                                    if (data.link.description) html += `<p><strong>Description:</strong> ${data.link.description}</p>`;
+                                    html += `</div>`;
+                                }
+                                html += `</div><h3 style="margin-top:30px;">Source</h3><pre><code class="language-json">${App.Utils.escapeHtml(text)}</code></pre>`;
+                                App.ui.preview.innerHTML = html;
+                            } else {
+                                App.ui.preview.innerHTML = `<pre><code class="language-json">${App.Utils.escapeHtml(text)}</code></pre>`;
+                            }
+                        } catch (e) {
+                            App.ui.preview.innerHTML = `<div style="color:var(--danger-border)">Invalid JSON</div><pre><code class="language-json">${App.Utils.escapeHtml(text)}</code></pre>`;
+                        }
                     } else {
                         const { title, body } = App.Utils.parseFM(text);
                         App.ui.docHeader.innerText = title || (App.state.currentHandle ? App.state.currentHandle.name : 'Untitled');
@@ -703,7 +730,10 @@
                         c.insertBefore(nav,c.firstChild); el.replaceWith(c);
                     });
                 },
-                toggleLoading(show) { App.ui.spinner.classList.toggle('hidden', !show); }
+                toggleLoading(show) { App.ui.spinner.classList.toggle('hidden', !show); },
+                escapeHtml(unsafe) {
+                    return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+                }
             }
         };
         document.addEventListener('DOMContentLoaded', () => App.init());
