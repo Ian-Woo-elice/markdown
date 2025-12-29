@@ -44,7 +44,15 @@
         .btn { background: #333; color: #fff; border: none; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; transition: 0.2s; display: inline-flex; align-items: center; gap: 6px; }
         .btn:hover { background: #444; }
         .btn.primary { background: var(--primary); color: #000; } .btn.primary:hover { background: var(--primary-hover); }
-        .btn.dirty::after { content: ''; width: 8px; height: 8px; background: #ff5555; border-radius: 50%; display: inline-block; }
+        .btn.dirty::after { content: ''; width: 8px; height: 8px; background: #ff5555; border-radius: 50%; display: inline-block; margin-left: 4px; }
+
+        /* Toggle Switch */
+        .toggle-label { display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; margin-right: 10px; }
+        .toggle-switch { position: relative; width: 34px; height: 18px; background: #555; border-radius: 20px; transition: 0.3s; }
+        .toggle-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; background: #fff; border-radius: 50%; transition: 0.3s; }
+        input:checked + .toggle-switch { background: var(--primary); }
+        input:checked + .toggle-switch::after { transform: translateX(16px); }
+        .toggle-input { display: none; }
 
         /* Layout */
         .container { display: flex; flex: 1; height: calc(100vh - 50px); position: relative; }
@@ -60,13 +68,10 @@
         .tree-item { padding: 4px 8px; cursor: pointer; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 6px; color: var(--text-main); line-height: 1.8; user-select: none; border: 2px solid transparent; }
         .tree-item:hover { background: rgba(127,127,127,0.1); }
         .tree-item.active { background: var(--primary-light); color: var(--primary); border-left: 3px solid var(--primary); padding-left: 5px; }
-        
-        /* [NEW] Drag & Drop Styles */
         .tree-item[draggable="true"] { cursor: grab; }
         .tree-item.drag-over { background: var(--primary-light); border: 2px dashed var(--primary); border-radius: 4px; }
+        
         .tree-content.drag-over { background: var(--primary-light); border: 2px dashed var(--primary); }
-
-        .tree-folder { font-weight: 600; color: var(--text-sub); }
         .empty-msg { padding: 30px; text-align: center; color: var(--text-sub); font-size: 13px; line-height: 1.5; }
 
         /* Editor & Preview */
@@ -76,23 +81,15 @@
         .toolbar button:hover { background: rgba(127,127,127,0.1); }
         .sep { width: 1px; background: var(--border); margin: 0 4px; }
         .editor-wrapper { flex: 1; position: relative; display: flex; flex-direction: column; }
-        #editor { 
-            flex: 1; width: 100%; padding: 20px; border: none; resize: none; outline: none; 
-            background: transparent; color: var(--text-main); 
-            font-family: 'SFMono-Regular', Consolas, monospace; font-size: 14px; line-height: 1.6;
-            white-space: pre-wrap; /* Ensure text wraps in editor */
-            overflow-wrap: break-word;
-        }
+        #editor { flex: 1; width: 100%; padding: 20px; border: none; resize: none; outline: none; background: transparent; color: var(--text-main); font-family: 'SFMono-Regular', Consolas, monospace; font-size: 14px; line-height: 1.6; white-space: pre-wrap; overflow-wrap: break-word; }
         .status-bar { height: 26px; background: var(--bg-status); border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: flex-end; padding: 0 16px; font-size: 11px; color: var(--text-sub); gap: 16px; user-select: none; }
+        .status-msg { margin-right: auto; font-weight: 600; color: var(--text-main); }
         .resizer { width: 6px; background: transparent; margin: 0 -3px; cursor: col-resize; z-index: 10; position: relative; }
         .resizer:hover { background: var(--primary); }
         
         .preview-area { flex: 1; min-width: 200px; display: flex; flex-direction: column; background: var(--bg-main); position: relative; overflow: hidden; border-left: 1px solid var(--border); }
         .doc-header { padding: 30px 40px 10px; font-size: 2em; font-weight: 800; color: var(--text-main); line-height: 1.3; }
-        #preview { 
-            flex: 1; padding: 10px 40px 50px; overflow-y: auto; font-size: 16px; line-height: 1.7; scroll-behavior: smooth; 
-            overflow-wrap: break-word; /* Ensure long words break in preview */
-        }
+        #preview { flex: 1; padding: 10px 40px 50px; overflow-y: auto; font-size: 16px; line-height: 1.7; scroll-behavior: smooth; overflow-wrap: break-word; }
 
         /* TOC */
         .toc-area { width: 220px; background: var(--bg-main); border-left: 1px solid var(--border); padding: 20px; overflow-y: auto; flex-shrink: 0; }
@@ -157,15 +154,15 @@
     <header>
         <div class="brand">CXO <span>Markdown Editor</span></div>
         <div class="controls">
+            <label class="toggle-label" title="내용 변경 시 2초 후 자동 저장">
+                Auto Save
+                <input type="checkbox" id="autoSaveToggle" class="toggle-input">
+                <div class="toggle-switch"></div>
+            </label>
             <button id="themeToggle" class="btn" title="테마 변경">🌙</button>
             <div class="divider"></div>
-            
-            <button id="openFolderBtn" class="btn" style="background: #444;">
-                📂 프로젝트 열기 (권한 필요)
-            </button>
-            
-            <!-- [NEW] Separated Save & Download Buttons -->
-            <button id="saveBtn" class="btn primary" title="현재 파일 덮어쓰기 (Ctrl+S)">💾 저장</button>
+            <button id="openFolderBtn" class="btn" style="background: #444;">📂 프로젝트 열기</button>
+            <button id="saveBtn" class="btn primary" title="덮어쓰기 (Ctrl+S)">💾 저장</button>
             <button id="downloadBtn" class="btn" title="파일로 다운로드">📥 다운로드</button>
         </div>
     </header>
@@ -181,11 +178,7 @@
                 </div>
             </div>
             <div id="fileTree" class="tree-content">
-                <div class="empty-msg">
-                    Chrome/Edge 브라우저 권장<br>
-                    '프로젝트 열기'를 눌러<br>
-                    작업 폴더를 선택하세요.
-                </div>
+                <div class="empty-msg">프로젝트 폴더를<br>열어주세요.</div>
             </div>
         </aside>
 
@@ -203,13 +196,14 @@
                 <button data-cmd="admonition" title="Tip">💡</button>
                 <button data-cmd="tabs" title="Tabs">📑</button>
                 <button data-cmd="details" title="Details">🔽</button>
-                <button data-cmd="table" title="Table Generator">📅</button>
+                <button data-cmd="table" title="Table">📅</button>
                 <button data-cmd="link">🔗</button>
-                <button data-cmd="frontmatter" style="font-size: 11px; width: auto;">YAML</button>
+                <button data-cmd="frontmatter" style="font-size:11px;width:auto;">YAML</button>
             </div>
             <div class="editor-wrapper">
                 <textarea id="editor" placeholder="파일을 선택하면 내용이 표시됩니다." spellcheck="false"></textarea>
                 <div class="status-bar">
+                    <div class="status-msg" id="statusMsg"></div>
                     <div class="stat-item" id="wordCount">단어: 0</div>
                     <div class="stat-item" id="charCount">글자: 0</div>
                     <div class="stat-item" id="readTime">읽기: 0분</div>
@@ -233,23 +227,18 @@
         </aside>
     </div>
 
-    <!-- UI Modals -->
+    <!-- Modals -->
     <div id="modalOverlay" class="modal-overlay">
-        <!-- New Item Modal -->
         <div id="newItemModal" class="modal hidden">
             <h3 id="modalTitle">새 항목 생성</h3>
             <div class="modal-body">
-                <div class="input-group">
-                    <label>이름</label>
-                    <input type="text" id="newItemName" placeholder="filename.md or foldername">
-                </div>
+                <div class="input-group"><label>이름</label><input type="text" id="newItemName" placeholder="이름을 입력하세요"></div>
             </div>
             <div class="modal-footer">
                 <button class="btn" id="closeNewItemModal">취소</button>
                 <button class="btn primary" id="createItemBtn">생성</button>
             </div>
         </div>
-        <!-- Table Modal (Reuse) -->
         <div id="tableModal" class="modal hidden">
             <h3>표 생성하기</h3>
             <div class="modal-body">
@@ -263,7 +252,6 @@
         </div>
     </div>
 
-    <!-- Context Menu -->
     <div id="ctxMenu" class="context-menu">
         <div class="ctx-item delete" id="ctxDelete">🗑️ 삭제</div>
     </div>
@@ -271,14 +259,9 @@
     <script>
         const App = {
             state: {
-                rootHandle: null, // Root Directory Handle
-                currentHandle: null, // Current File Handle
-                activeFolderHandle: null, // For creating new files
+                rootHandle: null, currentHandle: null, activeFolderHandle: null,
                 theme: localStorage.getItem('theme') || 'light',
-                isDirty: false,
-                isResizing: false,
-                contextTarget: null,
-                dragSource: null // [NEW] Drag source info
+                isDirty: false, isResizing: false, contextTarget: null, dragSource: null, autoSave: false
             },
             ui: {},
 
@@ -294,39 +277,50 @@
                     'openFolderBtn', 'saveBtn', 'downloadBtn', 'fileTree', 'editor', 'preview', 
                     'docHeader', 'toolbar', 'themeToggle', 'spinner', 'tocList',
                     'wordCount', 'charCount', 'readTime', 'resizer', 'editorArea', 'container',
-                    'newFileBtn', 'newFolderBtn', 'refreshBtn',
+                    'newFileBtn', 'newFolderBtn', 'refreshBtn', 'autoSaveToggle', 'statusMsg',
                     'modalOverlay', 'newItemModal', 'newItemName', 'createItemBtn', 'closeNewItemModal', 'modalTitle',
-                    'tableModal', 'tableRows', 'tableCols', 'insertTableBtn', 'closeTableModal',
-                    'ctxMenu', 'ctxDelete'
+                    'tableModal', 'tableRows', 'tableCols', 'insertTableBtn', 'closeTableModal', 'ctxMenu', 'ctxDelete'
                 ];
                 ids.forEach(id => this.ui[id] = document.getElementById(id));
             },
 
             Core: {
-                loadSettings() {
-                    App.Utils.applyTheme(App.state.theme);
-                },
+                loadSettings() { App.Utils.applyTheme(App.state.theme); },
                 bindEvents() {
                     const ui = App.ui;
-                    
-                    // File System
                     ui.openFolderBtn.addEventListener('click', App.FS.openDirectory);
-                    ui.saveBtn.addEventListener('click', App.FS.saveFileToDisk); // Overwrite
-                    ui.downloadBtn.addEventListener('click', App.FS.downloadAsFile); // Export
+                    ui.saveBtn.addEventListener('click', () => App.FS.saveFileToDisk());
+                    ui.downloadBtn.addEventListener('click', App.FS.downloadAsFile);
                     ui.refreshBtn.addEventListener('click', () => App.FS.refreshTree());
-                    
-                    // Create New
+                    ui.autoSaveToggle.addEventListener('change', (e) => {
+                        App.state.autoSave = e.target.checked;
+                        App.Utils.showStatus(App.state.autoSave ? '자동 저장 켜짐' : '자동 저장 꺼짐');
+                    });
+
                     ui.newFileBtn.addEventListener('click', () => App.FS.openCreateModal('file'));
                     ui.newFolderBtn.addEventListener('click', () => App.FS.openCreateModal('folder'));
                     ui.createItemBtn.addEventListener('click', App.FS.createItem);
-                    
-                    // Editor & Preview
-                    ui.editor.addEventListener('input', App.Utils.debounce((e) => {
+
+                    // Separate debouncers for Render(Fast) and AutoSave(Slow)
+                    const debouncedRender = App.Utils.debounce((val) => {
+                        App.Preview.render(val);
+                        App.Editor.updateStats(val);
+                    }, 300);
+
+                    const debouncedSave = App.Utils.debounce(() => {
+                        if(App.state.autoSave && App.state.currentHandle && App.state.isDirty) {
+                            App.FS.saveFileToDisk(true);
+                        }
+                    }, 2000);
+
+                    ui.editor.addEventListener('input', (e) => {
                         App.state.isDirty = true;
                         App.Utils.updateSaveBtnState();
-                        App.Preview.render(e.target.value);
-                        App.Editor.updateStats(e.target.value);
-                    }, 300));
+                        App.Utils.showStatus('입력 중...');
+                        debouncedRender(e.target.value);
+                        debouncedSave();
+                    });
+
                     ui.editor.addEventListener('keydown', e => {
                         App.Editor.handleTab(e);
                         if((e.ctrlKey||e.metaKey) && e.key === 's') { e.preventDefault(); App.FS.saveFileToDisk(); }
@@ -334,137 +328,104 @@
                     ui.editor.addEventListener('scroll', () => App.Utils.syncScroll('editor'));
                     ui.preview.addEventListener('scroll', () => { App.Utils.syncScroll('preview'); App.TOC.highlight(); });
 
-                    // Toolbar
                     ui.toolbar.addEventListener('click', App.Editor.handleToolbar);
                     ui.themeToggle.addEventListener('click', App.Utils.toggleTheme);
 
-                    // Modals
                     ui.closeNewItemModal.addEventListener('click', App.Utils.closeModals);
                     ui.closeTableModal.addEventListener('click', App.Utils.closeModals);
                     ui.insertTableBtn.addEventListener('click', App.Editor.insertTable);
                     ui.modalOverlay.addEventListener('click', (e) => { if(e.target === ui.modalOverlay) App.Utils.closeModals(); });
 
-                    // Context Menu
                     document.addEventListener('click', () => ui.ctxMenu.style.display = 'none');
                     ui.ctxDelete.addEventListener('click', App.FS.deleteItem);
 
-                    // [NEW] Root Drop Zone (Empty area)
-                    ui.fileTree.addEventListener('dragover', (e) => {
-                        e.preventDefault();
-                        if (App.state.rootHandle) ui.fileTree.classList.add('drag-over');
-                    });
-                    ui.fileTree.addEventListener('dragleave', () => ui.fileTree.classList.remove('drag-over'));
-                    ui.fileTree.addEventListener('drop', (e) => {
-                        e.preventDefault();
-                        ui.fileTree.classList.remove('drag-over');
-                        // Drop on root
-                        if (App.state.dragSource && App.state.rootHandle) {
-                            App.FS.moveEntry(App.state.dragSource, App.state.rootHandle);
+                    // Event Delegation for File Tree
+                    ui.fileTree.addEventListener('click', (e) => {
+                        const item = e.target.closest('.tree-item');
+                        if (!item) return;
+                        if (item.dataset.kind === 'directory') {
+                            const entry = item._handle;
+                            App.state.activeFolderHandle = entry;
+                            App.FS.tryLoadIndexFile(entry);
+                        } else {
+                            App.FS.loadFile(item._handle);
                         }
+                        ui.fileTree.querySelectorAll('.tree-item').forEach(el => el.classList.remove('active'));
+                        item.classList.add('active');
+                    });
+
+                    ui.fileTree.addEventListener('contextmenu', (e) => {
+                        const item = e.target.closest('.tree-item');
+                        if (!item) return;
+                        e.preventDefault();
+                        App.state.contextTarget = { handle: item._handle, parent: item._parent };
+                        ui.ctxMenu.style.display = 'block';
+                        ui.ctxMenu.style.left = `${e.pageX}px`;
+                        ui.ctxMenu.style.top = `${e.pageY}px`;
+                    });
+
+                    // Root Drag Over
+                    ui.fileTree.addEventListener('dragover', e => { e.preventDefault(); if(App.state.rootHandle) ui.fileTree.classList.add('drag-over'); });
+                    ui.fileTree.addEventListener('dragleave', () => ui.fileTree.classList.remove('drag-over'));
+                    ui.fileTree.addEventListener('drop', e => {
+                        e.preventDefault(); ui.fileTree.classList.remove('drag-over');
+                        if(App.state.dragSource && App.state.rootHandle) App.FS.moveEntry(App.state.dragSource, App.state.rootHandle);
                     });
                 }
             },
 
             FS: {
-                // 1. Open Directory
                 async openDirectory() {
                     try {
                         App.state.rootHandle = await window.showDirectoryPicker();
-                        App.state.activeFolderHandle = App.state.rootHandle; // Default active folder
+                        App.state.activeFolderHandle = App.state.rootHandle;
                         await App.FS.refreshTree();
-                    } catch (err) {
-                        console.error(err);
-                        if(err.name !== 'AbortError') alert('이 브라우저는 File System Access API를 지원하지 않거나 권한이 거부되었습니다.');
-                    }
+                    } catch (err) { if(err.name !== 'AbortError') alert('폴더 접근 권한이 필요합니다.'); }
                 },
-
-                // 2. Refresh Tree (Recursive)
                 async refreshTree() {
                     if (!App.state.rootHandle) return;
                     App.ui.fileTree.innerHTML = '';
                     const tree = await App.FS.buildTree(App.state.rootHandle);
                     App.ui.fileTree.appendChild(tree);
                 },
-
-                // [UPDATED] buildTree to support Drag & Drop and passing Parent Handle
                 async buildTree(dirHandle, parentHandle = null, level = 0) {
                     const ul = document.createElement('div');
                     const entries = [];
                     for await (const entry of dirHandle.values()) { entries.push(entry); }
-                    
                     entries.sort((a, b) => (a.kind === b.kind ? 0 : a.kind === 'directory' ? -1 : 1) || a.name.localeCompare(b.name));
 
                     for (const entry of entries) {
                         const div = document.createElement('div');
                         div.className = 'tree-item';
                         div.style.paddingLeft = `${level * 15 + 10}px`;
+                        div.innerHTML = `<span>${entry.kind==='directory'?'📂':(entry.name.endsWith('.json')?'⚙️':'📄')}</span> ${entry.name}`;
                         
-                        const icon = entry.kind === 'directory' ? '📂' : (entry.name.endsWith('.json') ? '⚙️' : '📄');
-                        div.innerHTML = `<span>${icon}</span> ${entry.name}`;
+                        // Metadata for Event Delegation
+                        div.dataset.kind = entry.kind;
+                        div._handle = entry;
+                        div._parent = dirHandle;
                         
-                        // [NEW] Drag & Drop Attributes
+                        // Drag Events (Attached directly for simplicity)
                         div.setAttribute('draggable', 'true');
-                        
-                        // [NEW] Drag Events
                         div.addEventListener('dragstart', (e) => {
-                            e.stopPropagation(); // Prevent bubbling
-                            App.state.dragSource = { handle: entry, parent: dirHandle }; // Current dir is parent of this entry
+                            e.stopPropagation();
+                            App.state.dragSource = { handle: entry, parent: dirHandle };
                             e.dataTransfer.effectAllowed = 'move';
                             div.style.opacity = '0.5';
                         });
-
                         div.addEventListener('dragend', () => div.style.opacity = '1');
-
                         div.addEventListener('dragover', (e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            // Only allow drop on directories
-                            if (entry.kind === 'directory') {
-                                div.classList.add('drag-over');
-                                e.dataTransfer.dropEffect = 'move';
-                            }
+                            e.preventDefault(); e.stopPropagation();
+                            if(entry.kind === 'directory') div.classList.add('drag-over');
                         });
-
-                        div.addEventListener('dragleave', (e) => {
-                            div.classList.remove('drag-over');
-                        });
-
+                        div.addEventListener('dragleave', () => div.classList.remove('drag-over'));
                         div.addEventListener('drop', async (e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
+                            e.preventDefault(); e.stopPropagation();
                             div.classList.remove('drag-over');
-                            if (entry.kind === 'directory' && App.state.dragSource) {
-                                await App.FS.moveEntry(App.state.dragSource, entry);
-                            }
+                            if(entry.kind === 'directory' && App.state.dragSource) await App.FS.moveEntry(App.state.dragSource, entry);
                         });
-
-                        // Click Event
-                        div.onclick = async (e) => {
-                            e.stopPropagation();
-                            if (entry.kind === 'directory') {
-                                App.state.activeFolderHandle = entry; 
-                                await App.FS.tryLoadIndexFile(entry);
-                            } else {
-                                App.FS.loadFile(entry);
-                            }
-                            document.querySelectorAll('.tree-item').forEach(el => el.classList.remove('active'));
-                            div.classList.add('active');
-                        };
-
-                        // Context Menu
-                        div.oncontextmenu = (e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            App.state.contextTarget = { handle: entry, parent: dirHandle };
-                            const menu = App.ui.ctxMenu;
-                            menu.style.display = 'block';
-                            menu.style.left = `${e.pageX}px`;
-                            menu.style.top = `${e.pageY}px`;
-                        };
 
                         ul.appendChild(div);
-
-                        // Recursive for directory
                         if (entry.kind === 'directory') {
                             const children = await App.FS.buildTree(entry, dirHandle, level + 1);
                             ul.appendChild(children);
@@ -472,198 +433,135 @@
                     }
                     return ul;
                 },
-
-                // [NEW] Move Entry (Copy & Delete)
-                async moveEntry(sourceInfo, destDirHandle) {
-                    const { handle: source, parent: sourceParent } = sourceInfo;
-                    
-                    // Basic Validation
-                    if (source === destDirHandle) return; // Can't move into self
-                    if (sourceParent === destDirHandle) return; // Same directory
-                    // NOTE: Ideally should check if dest is subdirectory of source
-
-                    if (!confirm(`'${source.name}'을(를) '${destDirHandle.name}'(으)로 이동하시겠습니까?`)) return;
-
+                async loadFile(fileHandle) {
                     try {
-                        App.Utils.toggleLoading(true);
-                        
-                        // Recursive Move Function
-                        const copyRecursively = async (srcHandle, dstHandle) => {
-                            if (srcHandle.kind === 'file') {
-                                const file = await srcHandle.getFile();
-                                const newFileHandle = await dstHandle.getFileHandle(srcHandle.name, { create: true });
-                                const writable = await newFileHandle.createWritable();
-                                await writable.write(file);
-                                await writable.close();
-                            } else {
-                                const newDirHandle = await dstHandle.getDirectoryHandle(srcHandle.name, { create: true });
-                                for await (const entry of srcHandle.values()) {
-                                    await copyRecursively(entry, newDirHandle);
-                                }
-                            }
-                        };
-
-                        // 1. Copy
-                        await copyRecursively(source, destDirHandle);
-
-                        // 2. Delete Original
-                        await sourceParent.removeEntry(source.name, { recursive: true });
-
-                        // 3. Refresh
-                        await App.FS.refreshTree();
-                        App.state.dragSource = null;
-
-                    } catch (err) {
-                        alert('이동 실패: ' + err.message);
-                        console.error(err);
-                    } finally {
-                        App.Utils.toggleLoading(false);
-                    }
+                        App.state.currentHandle = fileHandle;
+                        const file = await fileHandle.getFile();
+                        const text = await file.text();
+                        App.ui.editor.value = text;
+                        App.ui.editor.scrollTop = 0;
+                        App.state.isDirty = false;
+                        App.Utils.updateSaveBtnState();
+                        App.Utils.showStatus('로드됨');
+                        App.Preview.render(text);
+                        App.Editor.updateStats(text);
+                    } catch(e) { console.error(e); }
                 },
-
                 async tryLoadIndexFile(dirHandle) {
-                    let targetFile = null;
+                    let target = null;
                     for await (const [name, handle] of dirHandle.entries()) {
                         if (handle.kind === 'file') {
-                            if (name.toLowerCase() === 'index.md') { targetFile = handle; break; }
-                            if (!targetFile && name.endsWith('.json')) { targetFile = handle; }
+                            if (name.toLowerCase() === 'index.md') { target = handle; break; }
+                            if (!target && name.endsWith('.json')) target = handle;
                         }
                     }
-                    if (targetFile) await this.loadFile(targetFile);
+                    if(target) await this.loadFile(target);
                 },
-
-                // 3. Load File
-                async loadFile(fileHandle) {
-                    App.state.currentHandle = fileHandle;
-                    const file = await fileHandle.getFile();
-                    const text = await file.text();
-                    
-                    App.ui.editor.value = text;
-                    App.ui.editor.scrollTop = 0;
-                    App.state.isDirty = false;
-                    App.Utils.updateSaveBtnState();
-                    App.Preview.render(text);
-                    App.Editor.updateStats(text);
-                },
-
-                // 4. Save File (Overwrite)
-                async saveFileToDisk() {
-                    if (!App.state.currentHandle) return alert('저장할 파일이 없습니다. 폴더를 열고 파일을 선택해주세요.');
+                async saveFileToDisk(silent = false) {
+                    if (!App.state.currentHandle) return !silent && alert('저장할 파일이 없습니다.');
                     try {
+                        if(!silent) App.Utils.showStatus('저장 중...');
                         const writable = await App.state.currentHandle.createWritable();
                         await writable.write(App.ui.editor.value);
                         await writable.close();
                         App.state.isDirty = false;
                         App.Utils.updateSaveBtnState();
-                    } catch (err) {
-                        alert('저장 실패: ' + err.message);
-                    }
+                        App.Utils.showStatus('저장됨');
+                    } catch (err) { App.Utils.showStatus('저장 실패'); console.error(err); }
                 },
-
-                // 5. Download File (Export)
                 downloadAsFile() {
                     const content = App.ui.editor.value;
-                    if (!content) return alert('다운로드할 내용이 없습니다.');
-                    
-                    let filename = 'document.md';
-                    if (App.state.currentHandle) filename = App.state.currentHandle.name;
-                    
+                    if(!content) return alert('내용이 없습니다.');
                     const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
                     const a = document.createElement('a');
                     a.href = URL.createObjectURL(blob);
-                    a.download = filename;
+                    a.download = App.state.currentHandle ? App.state.currentHandle.name : 'document.md';
                     a.click();
                     URL.revokeObjectURL(a.href);
                 },
-
-                // 6. Create New Item
                 openCreateModal(type) {
-                    if (!App.state.rootHandle) return alert('프로젝트 폴더를 먼저 열어주세요.');
+                    if(!App.state.rootHandle) return alert('프로젝트 폴더를 먼저 열어주세요.');
                     App.state.createType = type;
-                    App.ui.modalTitle.innerText = type === 'file' ? '새 파일 생성' : '새 폴더 생성';
+                    App.ui.modalTitle.innerText = type === 'file' ? '새 파일' : '새 폴더';
                     App.ui.modalOverlay.style.display = 'flex';
                     App.ui.newItemModal.classList.remove('hidden');
                     App.ui.tableModal.classList.add('hidden');
                     App.ui.newItemName.focus();
                 },
-
                 async createItem() {
                     const name = App.ui.newItemName.value.trim();
-                    if (!name) return;
-                    
-                    // Use active folder or root
-                    const targetDir = App.state.activeFolderHandle || App.state.rootHandle;
-
+                    if(!name) return;
+                    const dir = App.state.activeFolderHandle || App.state.rootHandle;
                     try {
-                        if (App.state.createType === 'file') {
-                            await targetDir.getFileHandle(name, { create: true });
-                        } else {
-                            await targetDir.getDirectoryHandle(name, { create: true });
-                        }
+                        if(App.state.createType === 'file') await dir.getFileHandle(name, { create: true });
+                        else await dir.getDirectoryHandle(name, { create: true });
                         App.Utils.closeModals();
                         App.FS.refreshTree();
-                    } catch (err) {
-                        alert('생성 실패: ' + err.message);
-                    }
+                    } catch(e) { alert('생성 실패: ' + e.message); }
                 },
-
-                // 7. Delete Item
                 async deleteItem() {
-                    const target = App.state.contextTarget;
-                    if (!target) return;
-                    if (!confirm(`'${target.handle.name}'을(를) 정말 삭제하시겠습니까?`)) return;
-
+                    const t = App.state.contextTarget;
+                    if(!t || !confirm(`'${t.handle.name}' 삭제하시겠습니까?`)) return;
                     try {
-                        await target.parent.removeEntry(target.handle.name, { recursive: true });
-                        App.ui.ctxMenu.style.display = 'none';
-                        if (App.state.currentHandle === target.handle) {
-                            App.ui.editor.value = '';
-                            App.state.currentHandle = null;
-                        }
+                        await t.parent.removeEntry(t.handle.name, { recursive: true });
+                        if(App.state.currentHandle === t.handle) { App.ui.editor.value = ''; App.state.currentHandle = null; }
                         App.FS.refreshTree();
-                    } catch (err) {
-                        alert('삭제 실패: ' + err.message);
-                    }
+                    } catch(e) { alert('삭제 실패: ' + e.message); }
+                },
+                async moveEntry(src, destDir) {
+                    const { handle: s, parent: sp } = src;
+                    if(s === destDir || sp === destDir) return;
+                    if(!confirm(`'${s.name}' 이동하시겠습니까?`)) return;
+                    App.Utils.toggleLoading(true);
+                    try {
+                        const copy = async (srcH, dstH) => {
+                            if(srcH.kind === 'file') {
+                                const f = await srcH.getFile();
+                                const nf = await dstH.getFileHandle(srcH.name, { create: true });
+                                const w = await nf.createWritable();
+                                await w.write(f); await w.close();
+                            } else {
+                                const nd = await dstH.getDirectoryHandle(srcH.name, { create: true });
+                                for await (const e of srcH.values()) await copy(e, nd);
+                            }
+                        };
+                        await copy(s, destDir);
+                        await sp.removeEntry(s.name, { recursive: true });
+                        await App.FS.refreshTree();
+                        App.state.dragSource = null;
+                    } catch(e) { alert('이동 실패'); } finally { App.Utils.toggleLoading(false); }
                 }
             },
 
             Editor: {
                 handleToolbar(e) {
-                    const btn = e.target.closest('button'); if (!btn || !btn.dataset.cmd) return;
+                    const btn = e.target.closest('button'); if(!btn || !btn.dataset.cmd) return;
                     const cmd = btn.dataset.cmd;
-                    const ed = App.ui.editor;
-                    const { selectionStart: s, selectionEnd: end } = ed;
+                    if(cmd === 'table') return (App.ui.modalOverlay.style.display='flex', App.ui.tableModal.classList.remove('hidden'), App.ui.newItemModal.classList.add('hidden'));
                     
-                    if(cmd === 'table') {
-                        App.ui.modalOverlay.style.display = 'flex';
-                        App.ui.tableModal.classList.remove('hidden');
-                        App.ui.newItemModal.classList.add('hidden');
-                        return;
-                    }
-
-                    let t = { bold:['**','**'], italic:['*','*'], strike:['~~','~~'], h2:['## ',''], h3:['### ',''], code:['```\n','\n```'], link:['[','](url)'], admonition:[':::tip\n','\n:::'], tabs:['<Tabs>\n  <TabItem value="1" label="Tab 1">Content</TabItem>\n</Tabs>',''], details:['<details>\n<summary>Title</summary>\nContent\n</details>',''], frontmatter:['---\ntitle: Doc\n---\n\n',''] }[cmd];
+                    const t = { bold:['**','**'], italic:['*','*'], strike:['~~','~~'], h2:['## ',''], h3:['### ',''], code:['```\n','\n```'], link:['[','](url)'], admonition:[':::tip\n','\n:::'], tabs:['<Tabs>\n  <TabItem value="1" label="Tab 1">Content</TabItem>\n</Tabs>',''], details:['<details>\n<summary>Title</summary>\nContent\n</details>',''], frontmatter:['---\ntitle: Doc\n---\n\n',''] }[cmd];
                     
                     if(t) {
-                        ed.setRangeText(t[0] + ed.value.substring(s, end) + t[1], s, end, 'select');
+                        const ed = App.ui.editor;
+                        ed.setRangeText(t[0] + ed.value.substring(ed.selectionStart, ed.selectionEnd) + t[1], ed.selectionStart, ed.selectionEnd, 'select');
                         ed.focus();
                         App.Preview.render(ed.value);
                     }
                 },
                 insertTable() {
-                    const r = parseInt(document.getElementById('tableRows').value) || 3;
-                    const c = parseInt(document.getElementById('tableCols').value) || 3;
+                    const r = parseInt(document.getElementById('tableRows').value)||3, c = parseInt(document.getElementById('tableCols').value)||3;
                     let txt = '\n| ' + Array(c).fill('Head').join(' | ') + ' |\n| ' + Array(c).fill('---').join(' | ') + ' |\n';
                     for(let i=0; i<r; i++) txt += '| ' + Array(c).fill('Cell').join(' | ') + ' |\n';
-                    
                     const ed = App.ui.editor;
-                    ed.setRangeText(txt + '\n', ed.selectionStart, ed.selectionEnd, 'end');
+                    ed.setRangeText(txt, ed.selectionStart, ed.selectionEnd, 'end');
                     App.Utils.closeModals();
                     App.Preview.render(ed.value);
                 },
                 handleTab(e) {
                     if(e.key === 'Tab') {
                         e.preventDefault();
-                        document.execCommand('insertText', false, '  ');
+                        e.target.setRangeText('  ', e.target.selectionStart, e.target.selectionEnd, 'end');
+                        App.Preview.render(e.target.value);
                     }
                 },
                 updateStats(text) {
@@ -685,7 +583,7 @@
                     App.Utils.transformTabs();
                     App.TOC.generate();
                     App.ui.preview.querySelectorAll('pre code').forEach(hljs.highlightElement);
-                }
+                },
             },
 
             TOC: {
@@ -699,7 +597,6 @@
                         a.className = `toc-link toc-${el.tagName.toLowerCase()}`;
                         a.innerText = el.innerText;
                         a.href = `#${el.id}`;
-                        a.dataset.target = el.id;
                         a.onclick = (e) => { e.preventDefault(); el.scrollIntoView({behavior:'smooth'}); };
                         li.appendChild(a);
                         App.ui.tocList.appendChild(li);
@@ -709,35 +606,29 @@
                     const pos = App.ui.preview.scrollTop + 80;
                     let id = null;
                     App.ui.preview.querySelectorAll('h1, h2, h3').forEach(el => { if(el.offsetTop <= pos) id = el.id; });
-                    App.ui.tocList.querySelectorAll('a').forEach(a => a.classList.toggle('active', a.dataset.target === id));
+                    App.ui.tocList.querySelectorAll('a').forEach(a => a.classList.toggle('active', a.getAttribute('href') === `#${id}`));
                 }
             },
 
             Utils: {
                 toggleTheme() {
                     const t = App.state.theme === 'dark' ? 'light' : 'dark';
-                    App.state.theme = t;
-                    localStorage.setItem('theme', t);
+                    App.state.theme = t; localStorage.setItem('theme', t);
                     App.Utils.applyTheme(t);
                 },
                 applyTheme(t) {
                     document.body.classList.toggle('dark-mode', t === 'dark');
                     App.ui.themeToggle.innerText = t === 'dark' ? '☀️' : '🌙';
                 },
-                debounce(fn, delay) { let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn.apply(this, args), delay); } },
+                debounce(fn, d) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn.apply(this, a), d); } },
                 syncScroll(src) {
                     const { editor, preview } = App.ui;
-                    // Simple sync logic
                     if(src === 'editor') preview.scrollTop = (editor.scrollTop / (editor.scrollHeight - editor.clientHeight)) * (preview.scrollHeight - preview.clientHeight);
                     else editor.scrollTop = (preview.scrollTop / (preview.scrollHeight - preview.clientHeight)) * (editor.scrollHeight - editor.clientHeight);
                 },
-                updateSaveBtnState() {
-                    App.ui.saveBtn.classList.toggle('dirty', App.state.isDirty);
-                },
-                closeModals() {
-                    App.ui.modalOverlay.style.display = 'none';
-                    document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'));
-                },
+                updateSaveBtnState() { App.ui.saveBtn.classList.toggle('dirty', App.state.isDirty); },
+                showStatus(msg) { document.getElementById('statusMsg').innerText = msg; },
+                closeModals() { App.ui.modalOverlay.style.display = 'none'; document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden')); },
                 parseFM(text) {
                     const m = text.match(/^---\n([\s\S]+?)\n---/);
                     if(m) { try{ const fm=jsyaml.load(m[1]); return {title:fm.title||fm.id, body:text.replace(m[0],'')}; }catch(e){} }
@@ -761,12 +652,9 @@
                         c.insertBefore(nav,c.firstChild); el.replaceWith(c);
                     });
                 },
-                toggleLoading(show) {
-                    App.ui.spinner.classList.toggle('hidden', !show);
-                }
+                toggleLoading(show) { App.ui.spinner.classList.toggle('hidden', !show); }
             }
         };
-
         document.addEventListener('DOMContentLoaded', () => App.init());
     </script>
 </body>
