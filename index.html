@@ -18,9 +18,11 @@
             --bg-main: #ffffff; --bg-sidebar: #f6f8fa; --bg-toolbar: #ffffff; --bg-status: #f0f0f0; --bg-modal: #ffffff;
             --text-main: #24292f; --text-sub: #57606a;
             --border: #d0d7de;
-            --primary: #25c2a0; --primary-hover: #1e9e83; --primary-light: rgba(37, 194, 160, 0.1);
+            --primary: #5e35b1; /* Elice-like Purple/Blue for better visibility */
+            --primary-hover: #4527a0; --primary-light: rgba(94, 53, 177, 0.1);
             --code-bg: #f6f8fa; --header-bg: #242526; --header-text: #fff;
             --overlay: rgba(0, 0, 0, 0.5);
+            
             /* Admonitions */
             --note-bg: #f5f6f7; --note-border: #9e9e9e; --tip-bg: #f0fdf4; --tip-border: #25c2a0;
             --info-bg: #eff6ff; --info-border: #60a5fa; --warn-bg: #fffbf0; --warn-border: #fbbf24;
@@ -30,7 +32,7 @@
             --bg-main: #0d1117; --bg-sidebar: #161b22; --bg-toolbar: #0d1117; --bg-status: #161b22; --bg-modal: #1c2128;
             --text-main: #c9d1d9; --text-sub: #8b949e;
             --border: #30363d; --code-bg: #161b22; --header-bg: #161b22;
-            --primary-light: rgba(37, 194, 160, 0.2); --overlay: rgba(0, 0, 0, 0.7);
+            --primary-light: rgba(94, 53, 177, 0.3); --overlay: rgba(0, 0, 0, 0.7);
             --note-bg: #303336; --tip-bg: #1e2923; --info-bg: #1c2633; --warn-bg: #2d2618; --danger-bg: #311c1d;
         }
 
@@ -43,7 +45,7 @@
         .controls { display: flex; align-items: center; gap: 8px; }
         .btn { background: #333; color: #fff; border: none; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; transition: 0.2s; display: inline-flex; align-items: center; gap: 6px; }
         .btn:hover { background: #444; }
-        .btn.primary { background: var(--primary); color: #000; } .btn.primary:hover { background: var(--primary-hover); }
+        .btn.primary { background: var(--primary); color: #fff; } .btn.primary:hover { background: var(--primary-hover); }
         .btn.dirty::after { content: ''; width: 8px; height: 8px; background: #ff5555; border-radius: 50%; display: inline-block; margin-left: 4px; }
 
         /* Toggle Switch */
@@ -134,17 +136,33 @@
         #preview blockquote { border-left: 4px solid var(--primary); padding-left: 16px; margin: 0 0 16px; background: var(--primary-light); }
         #preview img { max-width: 100%; border-radius: 6px; }
 
-        /* JSON Preview Style */
-        .category-card { border: 1px solid var(--border); border-radius: 8px; background: var(--bg-sidebar); padding: 0; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        .card-header { padding: 20px; background: var(--bg-main); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
-        .folder-icon { font-size: 2em; }
-        .card-header h2 { margin: 0; font-size: 1.4em; color: var(--text-main); border: none; padding: 0; }
-        .card-body { padding: 20px; }
-        .description { font-size: 1.1em; color: var(--text-sub); margin-bottom: 20px; line-height: 1.6; }
-        .meta-grid { display: flex; gap: 12px; flex-wrap: wrap; }
-        .meta-tag { background: var(--code-bg); padding: 6px 12px; border-radius: 20px; font-size: 0.9em; border: 1px solid var(--border); color: var(--text-main); display: flex; align-items: center; gap: 6px; }
-        .meta-tag strong { color: var(--primary); }
-        .json-source-view h3 { font-size: 1.1em; color: var(--text-sub); border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-top: 30px; }
+        /* [NEW] Docusaurus JSON Category Card Style */
+        .category-card { 
+            border: 1px solid var(--border); border-radius: 12px; 
+            background: var(--bg-main); 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08); 
+            margin-bottom: 30px; overflow: hidden; 
+        }
+        .cat-header {
+            padding: 30px; background: linear-gradient(135deg, var(--primary-light) 0%, var(--bg-main) 100%);
+            border-bottom: 1px solid var(--border);
+        }
+        .cat-title {
+            margin: 0 0 10px 0; font-size: 2em; font-weight: 800; color: var(--primary);
+            display: flex; align-items: center; gap: 10px;
+        }
+        .cat-desc { font-size: 1.1em; color: var(--text-sub); line-height: 1.6; margin: 0; }
+        .cat-body { padding: 20px 30px; }
+        .meta-list { display: flex; flex-wrap: wrap; gap: 10px; list-style: none; padding: 0; margin: 0; }
+        .meta-item { 
+            background: var(--code-bg); padding: 6px 12px; border-radius: 20px; 
+            font-size: 0.9em; border: 1px solid var(--border); color: var(--text-main);
+            display: flex; align-items: center; gap: 6px;
+        }
+        .meta-label { font-weight: 600; color: var(--text-sub); text-transform: uppercase; font-size: 0.8em; margin-right: 4px; }
+        
+        .json-error { padding: 20px; background: var(--danger-bg); border: 1px solid var(--danger-border); color: #d32f2f; border-radius: 8px; margin-bottom: 20px; }
+        .json-source-header { margin-top: 40px; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 10px; font-weight: bold; color: var(--text-sub); }
 
         /* Modals & Utils */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--overlay); display: none; justify-content: center; align-items: center; z-index: 1000; }
@@ -249,7 +267,6 @@
 
     <!-- Modals -->
     <div id="modalOverlay" class="modal-overlay">
-        <!-- New Item Modal -->
         <div id="newItemModal" class="modal hidden">
             <h3 id="modalTitle">새 항목 생성</h3>
             <div class="modal-body">
@@ -260,7 +277,6 @@
                 <button class="btn primary" id="createItemBtn">확인</button>
             </div>
         </div>
-        <!-- Table Modal (Reuse) -->
         <div id="tableModal" class="modal hidden">
             <h3>표 생성하기</h3>
             <div class="modal-body">
@@ -272,7 +288,6 @@
                 <button class="btn primary" id="insertTableBtn">삽입</button>
             </div>
         </div>
-        <!-- Rename Modal -->
         <div id="renameModal" class="modal hidden">
             <h3>이름 변경</h3>
             <div class="modal-body">
@@ -297,7 +312,7 @@
                 theme: localStorage.getItem('theme') || 'light',
                 isDirty: false, isResizing: false, contextTarget: null, dragSource: null, 
                 autoSave: localStorage.getItem('autoSave') === 'true',
-                createType: null // 'file', 'folder', or 'rename'
+                createType: null
             },
             ui: {},
 
@@ -589,31 +604,23 @@
                         App.FS.refreshTree();
                     } catch(e) { alert('삭제 실패: ' + e.message); }
                 },
-                // [NEW] Rename Logic (Same directory move)
                 async renameItem() {
                     const newName = App.ui.renameInput.value.trim();
                     const target = App.state.contextTarget;
                     if(!newName || !target) return;
                     if(newName === target.handle.name) return App.Utils.closeModals();
-
                     try {
-                        // Pass parent handle as destination to simulate rename in place
                         await App.FS.transferEntry({ handle: target.handle, parent: target.parent }, target.parent, newName);
                         App.Utils.closeModals();
-                        // App.FS.refreshTree(); // Called inside transferEntry
                     } catch(e) { alert('이름 변경 실패: ' + e.message); }
                 },
-                // [UPDATED] Unified Transfer Logic (Move/Rename)
                 async transferEntry(src, destDirHandle, newName = null) {
                     const { handle: s, parent: sp } = src;
                     const name = newName || s.name;
-                    
-                    // Validation
-                    if(!newName) { // Move operation validation
+                    if(!newName) {
                         if(s === destDirHandle || sp === destDirHandle) return;
                         if(!confirm(`'${s.name}' 이동하시겠습니까?`)) return;
                     }
-
                     App.Utils.toggleLoading(true);
                     try {
                         const copy = async (srcH, dstH, targetName) => {
@@ -627,16 +634,12 @@
                                 for await (const e of srcH.values()) await copy(e, nd, e.name);
                             }
                         };
-                        
                         await copy(s, destDirHandle, name);
                         await sp.removeEntry(s.name, { recursive: true });
                         await App.FS.refreshTree();
                         App.state.dragSource = null;
                         App.state.contextTarget = null;
-                    } catch(e) { 
-                        alert('작업 실패: ' + e.message); 
-                        console.error(e);
-                    } finally { App.Utils.toggleLoading(false); }
+                    } catch(e) { alert('작업 실패: ' + e.message); console.error(e); } finally { App.Utils.toggleLoading(false); }
                 }
             },
 
@@ -686,31 +689,27 @@
                     if (isJson) {
                         App.ui.docHeader.innerText = App.state.currentHandle.name;
                         App.ui.tocList.innerHTML = '';
-                        
                         try {
                             const data = JSON.parse(text);
-                            // Enhanced Category Card
-                            if (data.label || (data.link && data.link.type === 'generated-index')) {
+                            // Docusaurus Category Check
+                            if (data.label || data.position || data.link || data.collapsible !== undefined || data.className) {
                                 let html = `<div class="category-card">
-                                    <div class="card-header"><span class="folder-icon">📂</span><h2>${App.Utils.escapeHtml(data.label || 'Untitled Category')}</h2></div>
-                                    <div class="card-body">`;
-                                
-                                if (data.link && data.link.description) html += `<p class="description">${App.Utils.escapeHtml(data.link.description)}</p>`;
-                                
-                                html += `<div class="meta-grid">`;
-                                if (data.position) html += `<span class="meta-tag"><strong>#</strong> Position: ${data.position}</span>`;
-                                if (data.collapsible !== undefined) html += `<span class="meta-tag"><strong>↕</strong> Collapsible: ${data.collapsible}</span>`;
-                                if (data.collapsed !== undefined) html += `<span class="meta-tag"><strong>👁</strong> Collapsed: ${data.collapsed}</span>`;
-                                if (data.className) html += `<span class="meta-tag"><strong>✨</strong> Class: ${data.className}</span>`;
-                                html += `</div></div></div>`;
-                                
-                                html += `<div class="json-source-view"><h3>Raw Source</h3><pre><code class="language-json">${App.Utils.escapeHtml(text)}</code></pre></div>`;
+                                    <div class="cat-header"><div class="cat-title"><span style="font-size:1.5em">📂</span> ${App.Utils.escapeHtml(data.label || 'Untitled Category')}</div>`;
+                                if (data.link && data.link.description) html += `<p class="cat-desc">${App.Utils.escapeHtml(data.link.description)}</p>`;
+                                html += `</div><div class="cat-body"><ul class="meta-list">`;
+                                if (data.position) html += `<li class="meta-item"><span class="meta-label">Position:</span> ${data.position}</li>`;
+                                if (data.collapsible !== undefined) html += `<li class="meta-item"><span class="meta-label">Collapsible:</span> ${data.collapsible}</li>`;
+                                if (data.collapsed !== undefined) html += `<li class="meta-item"><span class="meta-label">Collapsed:</span> ${data.collapsed}</li>`;
+                                if (data.className) html += `<li class="meta-item"><span class="meta-label">Class:</span> ${data.className}</li>`;
+                                if (data.link && data.link.type) html += `<li class="meta-item"><span class="meta-label">Link Type:</span> ${data.link.type}</li>`;
+                                html += `</ul></div></div>`;
+                                html += `<div class="json-source-header">JSON Source</div><pre><code class="language-json">${App.Utils.escapeHtml(text)}</code></pre>`;
                                 App.ui.preview.innerHTML = html;
                             } else {
                                 App.ui.preview.innerHTML = `<pre><code class="language-json">${App.Utils.escapeHtml(text)}</code></pre>`;
                             }
                         } catch (e) {
-                            App.ui.preview.innerHTML = `<div class="admonition danger"><span class="admonition-title">JSON Syntax Error</span>${e.message}</div><pre><code class="language-json">${App.Utils.escapeHtml(text)}</code></pre>`;
+                            App.ui.preview.innerHTML = `<div class="json-error"><strong>JSON Parsing Error:</strong><br>${e.message}</div><pre><code class="language-json">${App.Utils.escapeHtml(text)}</code></pre>`;
                         }
                     } else {
                         const { title, body } = App.Utils.parseFM(text);
