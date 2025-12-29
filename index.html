@@ -136,33 +136,19 @@
         #preview blockquote { border-left: 4px solid var(--primary); padding-left: 16px; margin: 0 0 16px; background: var(--primary-light); }
         #preview img { max-width: 100%; border-radius: 6px; }
 
-        /* [NEW] Docusaurus JSON Category Card Style */
-        .category-card { 
-            border: 1px solid var(--border); border-radius: 12px; 
-            background: var(--bg-main); 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08); 
-            margin-bottom: 30px; overflow: hidden; 
+        /* [NEW] Simple Docusaurus JSON Style */
+        .category-container { padding: 20px 0; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+        .cat-title { font-size: 2.5rem; font-weight: 800; color: var(--text-main); margin: 0 0 16px 0; line-height: 1.2; }
+        .cat-desc { font-size: 1.1rem; color: var(--text-sub); line-height: 1.6; margin-bottom: 24px; }
+        .cat-meta-box { 
+            background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 8px; padding: 16px;
+            font-size: 0.9rem; color: var(--text-sub);
         }
-        .cat-header {
-            padding: 30px; background: linear-gradient(135deg, var(--primary-light) 0%, var(--bg-main) 100%);
-            border-bottom: 1px solid var(--border);
-        }
-        .cat-title {
-            margin: 0 0 10px 0; font-size: 2em; font-weight: 800; color: var(--primary);
-            display: flex; align-items: center; gap: 10px;
-        }
-        .cat-desc { font-size: 1.1em; color: var(--text-sub); line-height: 1.6; margin: 0; }
-        .cat-body { padding: 20px 30px; }
-        .meta-list { display: flex; flex-wrap: wrap; gap: 10px; list-style: none; padding: 0; margin: 0; }
-        .meta-item { 
-            background: var(--code-bg); padding: 6px 12px; border-radius: 20px; 
-            font-size: 0.9em; border: 1px solid var(--border); color: var(--text-main);
-            display: flex; align-items: center; gap: 6px;
-        }
-        .meta-label { font-weight: 600; color: var(--text-sub); text-transform: uppercase; font-size: 0.8em; margin-right: 4px; }
+        .cat-meta-item { display: inline-block; margin-right: 20px; margin-bottom: 8px; }
+        .cat-meta-label { font-weight: 600; color: var(--text-main); margin-right: 6px; }
         
         .json-error { padding: 20px; background: var(--danger-bg); border: 1px solid var(--danger-border); color: #d32f2f; border-radius: 8px; margin-bottom: 20px; }
-        .json-source-header { margin-top: 40px; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 10px; font-weight: bold; color: var(--text-sub); }
+        .json-source-header { margin-top: 40px; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 10px; font-weight: bold; color: var(--text-sub); font-size: 0.85em; text-transform: uppercase; }
 
         /* Modals & Utils */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--overlay); display: none; justify-content: center; align-items: center; z-index: 1000; }
@@ -691,19 +677,32 @@
                         App.ui.tocList.innerHTML = '';
                         try {
                             const data = JSON.parse(text);
-                            // Docusaurus Category Check
+                            // Simple Docusaurus Style Preview
                             if (data.label || data.position || data.link || data.collapsible !== undefined || data.className) {
-                                let html = `<div class="category-card">
-                                    <div class="cat-header"><div class="cat-title"><span style="font-size:1.5em">📂</span> ${App.Utils.escapeHtml(data.label || 'Untitled Category')}</div>`;
-                                if (data.link && data.link.description) html += `<p class="cat-desc">${App.Utils.escapeHtml(data.link.description)}</p>`;
-                                html += `</div><div class="cat-body"><ul class="meta-list">`;
-                                if (data.position) html += `<li class="meta-item"><span class="meta-label">Position:</span> ${data.position}</li>`;
-                                if (data.collapsible !== undefined) html += `<li class="meta-item"><span class="meta-label">Collapsible:</span> ${data.collapsible}</li>`;
-                                if (data.collapsed !== undefined) html += `<li class="meta-item"><span class="meta-label">Collapsed:</span> ${data.collapsed}</li>`;
-                                if (data.className) html += `<li class="meta-item"><span class="meta-label">Class:</span> ${data.className}</li>`;
-                                if (data.link && data.link.type) html += `<li class="meta-item"><span class="meta-label">Link Type:</span> ${data.link.type}</li>`;
-                                html += `</ul></div></div>`;
+                                let html = `<div class="category-container">`;
+                                
+                                // 1. Title (Label)
+                                html += `<h1 class="cat-title">${App.Utils.escapeHtml(data.label || 'Untitled Category')}</h1>`;
+                                
+                                // 2. Description
+                                if (data.link && data.link.description) {
+                                    html += `<p class="cat-desc">${App.Utils.escapeHtml(data.link.description)}</p>`;
+                                } else if (!data.link) {
+                                    html += `<p class="cat-desc" style="color:var(--text-sub); font-style:italic;">(설명이 없습니다)</p>`;
+                                }
+
+                                // 3. Meta Data Box (Simple List)
+                                html += `<div class="cat-meta-box">`;
+                                if (data.position) html += `<div class="cat-meta-item"><span class="cat-meta-label">Position:</span>${data.position}</div>`;
+                                if (data.collapsible !== undefined) html += `<div class="cat-meta-item"><span class="cat-meta-label">Collapsible:</span>${data.collapsible}</div>`;
+                                if (data.collapsed !== undefined) html += `<div class="cat-meta-item"><span class="cat-meta-label">Collapsed:</span>${data.collapsed}</div>`;
+                                if (data.className) html += `<div class="cat-meta-item"><span class="cat-meta-label">Class:</span>${data.className}</div>`;
+                                if (data.link && data.link.type) html += `<div class="cat-meta-item"><span class="cat-meta-label">Type:</span>${data.link.type}</div>`;
+                                html += `</div></div>`;
+                                
+                                // 4. Source Code
                                 html += `<div class="json-source-header">JSON Source</div><pre><code class="language-json">${App.Utils.escapeHtml(text)}</code></pre>`;
+                                
                                 App.ui.preview.innerHTML = html;
                             } else {
                                 App.ui.preview.innerHTML = `<pre><code class="language-json">${App.Utils.escapeHtml(text)}</code></pre>`;
