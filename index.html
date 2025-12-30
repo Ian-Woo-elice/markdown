@@ -118,19 +118,19 @@
         #preview blockquote { border-left: 4px solid var(--primary); padding: 10px 20px; margin: 0 0 20px; background: var(--primary-light); border-radius: 0 8px 8px 0; }
         #preview img { max-width: 100%; border-radius: 8px; }
 
-        /* [NEW] Docusaurus Generated Index Style */
+        /* [NEW] Docusaurus Generated Index Style - Refined */
         .category-header { border-bottom: 1px solid var(--border); padding-bottom: 40px; margin-bottom: 40px; }
-        .category-title { font-size: 3rem; font-weight: 800; color: var(--text-main); margin-bottom: 16px; }
+        .category-title { font-size: 3rem; font-weight: 800; color: var(--text-main); margin-bottom: 16px; line-height: 1.1; }
         .category-description { font-size: 1.25rem; color: var(--text-sub); line-height: 1.6; }
         
-        .index-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-top: 20px; }
+        .index-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; margin-top: 20px; }
         .index-card { 
-            display: flex; flex-direction: column; padding: 20px; border: 1px solid var(--border); border-radius: 8px; 
+            display: flex; flex-direction: column; padding: 24px; border: 1px solid var(--border); border-radius: 8px; 
             text-decoration: none; color: inherit; transition: border-color 0.2s, box-shadow 0.2s; background: var(--bg-main);
         }
-        .index-card:hover { border-color: var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .index-card-title { font-weight: 700; font-size: 1.1rem; color: var(--primary); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
-        .index-card-desc { font-size: 0.9rem; color: var(--text-sub); line-height: 1.5; }
+        .index-card:hover { border-color: var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .index-card-title { font-weight: 700; font-size: 1.2rem; color: var(--primary); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .index-card-desc { font-size: 0.95rem; color: var(--text-sub); line-height: 1.5; }
 
         .json-meta-tag { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; background: var(--bg-sidebar); border-radius: 4px; font-size: 0.75rem; color: var(--text-sub); margin-top: 20px; border: 1px solid var(--border); }
 
@@ -272,7 +272,6 @@
         </div>
     </div>
 
-    <!-- Context Menu -->
     <div id="ctxMenu" class="context-menu">
         <div class="ctx-item" id="ctxRename">✏️ 이름 변경</div>
         <div class="ctx-item delete" id="ctxDelete">🗑️ 삭제</div>
@@ -488,7 +487,6 @@
                     }
                     if(target) await this.loadFile(target);
                     else {
-                        // 폴더에 인덱스 파일이 없는 경우, 빈 상태로 렌더링 (그리드 시뮬레이션을 위해 필요할 수 있음)
                         App.ui.editor.value = "";
                         App.state.currentHandle = null;
                         App.Preview.render("");
@@ -587,7 +585,7 @@
                         await sp.removeEntry(s.name, { recursive: true });
                         await App.FS.refreshTree();
                         App.state.dragSource = null; App.state.contextTarget = null;
-                    } catch(e) { alert('작업 실패: ' + e.message); } finally { App.Utils.toggleLoading(false); }
+                    } catch(e) { alert('작업 실패: ' + e.message); console.error(e); } finally { App.Utils.toggleLoading(false); }
                 }
             },
 
@@ -635,7 +633,7 @@
                         App.ui.tocList.innerHTML = '';
                         try {
                             const data = JSON.parse(text);
-                            // Docusaurus Generated Index Style Simulation
+                            // Valid Docusaurus Category Check
                             if (data.label || data.position || data.link) {
                                 let html = `<div class="category-page-header">
                                     <h1 class="cat-title">${App.Utils.escapeHtml(data.label || '카테고리')}</h1>`;
@@ -644,29 +642,41 @@
                                 }
                                 html += `</div>`;
                                 
-                                // [NEW] Scan Folder and show sibling cards
-                                const siblings = [];
+                                // [NEW] Scan folder for siblings and extract Front Matter
+                                const docCards = [];
                                 if (App.state.activeFolderHandle) {
                                     for await (const entry of App.state.activeFolderHandle.values()) {
-                                        if (entry.name !== App.state.currentHandle.name) {
-                                            siblings.push(entry);
+                                        if (entry.kind === 'file' && (entry.name.endsWith('.md') || entry.name.endsWith('.mdx'))) {
+                                            const file = await entry.getFile();
+                                            const content = await file.text();
+                                            const meta = App.Utils.parseFM(content);
+                                            docCards.push({
+                                                name: entry.name,
+                                                title: meta.title || entry.name,
+                                                position: meta.sidebar_position !== undefined ? meta.sidebar_position : 999,
+                                                description: meta.description || ""
+                                            });
                                         }
                                     }
                                 }
-                                
-                                if (siblings.length > 0) {
+
+                                // Sort by position
+                                docCards.sort((a, b) => a.position - b.position);
+
+                                if (docCards.length > 0) {
                                     html += `<div class="index-grid">`;
-                                    for (const entry of siblings) {
-                                        const icon = entry.kind === 'directory' ? '📂' : '📄';
+                                    for (const card of docCards) {
                                         html += `<div class="index-card">
-                                            <div class="index-card-title"><span>${icon}</span> ${App.Utils.escapeHtml(entry.name)}</div>
-                                            <div class="index-card-desc">해당 문서를 보려면 사이드바에서 클릭하세요.</div>
+                                            <div class="index-card-title">📄 ${App.Utils.escapeHtml(card.title)}</div>
+                                            <div class="index-card-desc">${App.Utils.escapeHtml(card.description || '이 문서에 대한 설명이 없습니다.')}</div>
+                                            <div class="json-meta-tag" style="margin-top:auto">Pos: ${card.position}</div>
                                         </div>`;
                                     }
                                     html += `</div>`;
                                 }
 
-                                html += `<div class="json-source-view"><details><summary>JSON Source Code</summary><pre><code class="language-json">${App.Utils.escapeHtml(text)}</code></pre></details></div>`;
+                                // Collapsible Source
+                                html += `<div class="json-source-view"><details><summary>JSON 설정 소스 보기</summary><pre><code class="language-json">${App.Utils.escapeHtml(text)}</code></pre></details></div>`;
                                 App.ui.preview.innerHTML = html;
                             } else {
                                 App.ui.preview.innerHTML = `<pre><code class="language-json">${App.Utils.escapeHtml(text)}</code></pre>`;
@@ -730,8 +740,15 @@
                 closeModals() { App.ui.modalOverlay.style.display = 'none'; document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden')); },
                 parseFM(text) {
                     const m = text.match(/^---\n([\s\S]+?)\n---/);
-                    if(m) { try{ const fm=jsyaml.load(m[1]); return {title:fm.title||fm.id, body:text.replace(m[0],'')}; }catch(e){} }
-                    return {title:null, body:text};
+                    let meta = {};
+                    let body = text;
+                    if(m) { 
+                        try { 
+                            meta = jsyaml.load(m[1]) || {}; 
+                            body = text.replace(m[0],'');
+                        } catch(e) {} 
+                    }
+                    return { ...meta, title: meta.title || null, body };
                 },
                 transformTabs() {
                     App.ui.preview.querySelectorAll('tabs').forEach(el => {
@@ -753,6 +770,7 @@
                 },
                 toggleLoading(show) { App.ui.spinner.classList.toggle('hidden', !show); },
                 escapeHtml(unsafe) {
+                    if (typeof unsafe !== 'string') return "";
                     return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
                 }
             }
