@@ -177,6 +177,8 @@
         .ctx-item:last-child { border-bottom: none; }
         .ctx-item:hover { background: var(--primary-light); color: var(--primary); }
         .ctx-item.delete { color: var(--danger-border); }
+        
+        @media (max-width: 1200px) { .toc-area { display: none; } }
     </style>
 </head>
 <body>
@@ -209,7 +211,6 @@
                 </div>
             </div>
             <div id="fileTree" class="tree-content">
-                <!-- [NEW] Improved Empty State -->
                 <div class="empty-state-container">
                     <div class="empty-state-icon">📂</div>
                     <div class="empty-state-title">No Project Open</div>
@@ -226,17 +227,23 @@
         <!-- Editor -->
         <main class="pane pane-editor" id="editorPane">
             <div class="toolbar" id="toolbar">
-                <button data-cmd="bold"><b>B</b></button>
-                <button data-cmd="italic"><i>I</i></button>
+                <button data-cmd="bold" title="Bold"><b>B</b></button>
+                <button data-cmd="italic" title="Italic"><i>I</i></button>
+                <button data-cmd="strike" title="Strike"><s>S</s></button>
                 <span class="sep"></span>
                 <button data-cmd="h2">H2</button>
                 <button data-cmd="h3">H3</button>
                 <span class="sep"></span>
-                <button data-cmd="code">Code</button>
+                <button data-cmd="code" title="Block Code">Code</button>
+                <button data-cmd="inline" title="Inline Code">I</button>
+                <button data-cmd="task" title="Task List">☑️</button>
+                <button data-cmd="quote" title="Blockquote">❝</button>
+                <button data-cmd="hr" title="Horizontal Rule">➖</button>
+                <span class="sep"></span>
                 <button data-cmd="admonition" title="Tip">💡</button>
                 <button data-cmd="table" title="Table">📅</button>
+                <button data-cmd="image" title="Image">🖼️</button>
                 
-                <!-- [NEW] YAML Dropdown -->
                 <div class="dropdown">
                     <button id="yamlBtn" title="YAML Templates" style="font-size:11px; width:auto;">YAML ▼</button>
                     <div class="dropdown-menu" id="yamlDropdown">
@@ -279,6 +286,7 @@
 
     <!-- Modals -->
     <div id="modalOverlay" class="modal-overlay">
+        <!-- New Item Modal -->
         <div id="newItemModal" class="modal hidden">
             <h3 id="modalTitle">항목 생성</h3>
             <div class="input-group"><label>이름</label><input type="text" id="newItemName" placeholder="파일명/폴더명 입력"></div>
@@ -287,12 +295,37 @@
                 <button class="btn primary" id="createItemBtn">확인</button>
             </div>
         </div>
+        <!-- Rename Modal -->
         <div id="renameModal" class="modal hidden">
             <h3>이름 변경</h3>
             <div class="input-group"><label>새 이름</label><input type="text" id="renameInput"></div>
             <div class="modal-footer">
                 <button class="btn" id="closeRenameModal">취소</button>
                 <button class="btn primary" id="renameBtn">변경</button>
+            </div>
+        </div>
+        <!-- Table Modal -->
+        <div id="tableModal" class="modal hidden">
+            <h3>표 생성하기</h3>
+            <div class="modal-body">
+                <div class="input-group"><label>행</label><input type="number" id="tableRows" value="3"></div>
+                <div class="input-group"><label>열</label><input type="number" id="tableCols" value="3"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" id="closeTableModal">취소</button>
+                <button class="btn primary" id="insertTableBtn">삽입</button>
+            </div>
+        </div>
+        <!-- Image Modal -->
+        <div id="imageModal" class="modal hidden">
+            <h3>이미지 삽입</h3>
+            <div class="modal-body">
+                <div class="input-group"><label>URL</label><input type="text" id="imageUrl" placeholder="https://..."></div>
+                <div class="input-group"><label>설명</label><input type="text" id="imageAlt" placeholder="이미지 설명 (Alt)"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" id="closeImageModal">취소</button>
+                <button class="btn primary" id="insertImageBtn">삽입</button>
             </div>
         </div>
     </div>
@@ -330,7 +363,9 @@
                     'createItemBtn', 'closeNewItemModal', 'modalTitle', 'ctxMenu', 'ctxDelete', 
                     'ctxRename', 'ctxDuplicate', 'renameModal', 'renameInput', 'renameBtn', 
                     'closeRenameModal', 'searchInput', 'newFileBtn', 'newFolderBtn', 'refreshBtn',
-                    'sidebarOpenBtn', 'yamlBtn', 'yamlDropdown'
+                    'sidebarOpenBtn', 'yamlBtn', 'yamlDropdown',
+                    'tableModal', 'tableRows', 'tableCols', 'insertTableBtn', 'closeTableModal',
+                    'imageModal', 'imageUrl', 'imageAlt', 'insertImageBtn', 'closeImageModal'
                 ];
                 ids.forEach(id => this.ui[id] = document.getElementById(id));
                 // Resizers
@@ -363,8 +398,12 @@
                         localStorage.setItem('autoSave', App.state.autoSave);
                     });
 
-                    ui.newFileBtn.addEventListener('click', () => App.FS.openCreateModal('file'));
-                    ui.newFolderBtn.addEventListener('click', () => App.FS.openCreateModal('folder'));
+                    ui.newFileBtn.addEventListener('click', () => App.Utils.openModal('newItemModal'));
+                    ui.newFolderBtn.addEventListener('click', () => { App.FS.openCreateModal('folder'); });
+                    
+                    // Specific handler for file create modal to set type
+                    ui.newFileBtn.onclick = () => App.FS.openCreateModal('file');
+                    
                     ui.createItemBtn.addEventListener('click', App.FS.createItem);
 
                     const debouncedRender = App.Utils.debounce((val) => {
@@ -394,7 +433,7 @@
 
                     ui.toolbar.addEventListener('click', App.Editor.handleToolbar);
                     
-                    // [NEW] YAML Dropdown Logic
+                    // YAML Dropdown
                     ui.yamlBtn.addEventListener('click', (e) => {
                         e.stopPropagation();
                         ui.yamlDropdown.classList.toggle('show');
@@ -413,10 +452,20 @@
                     });
 
                     ui.themeToggle.addEventListener('click', App.Utils.toggleTheme);
+                    
+                    // Modals Close
                     ui.closeNewItemModal.addEventListener('click', App.Utils.closeModals);
                     ui.closeRenameModal.addEventListener('click', App.Utils.closeModals);
-                    ui.renameBtn.addEventListener('click', App.FS.renameItem);
+                    ui.closeTableModal.addEventListener('click', App.Utils.closeModals);
+                    ui.closeImageModal.addEventListener('click', App.Utils.closeModals);
+                    ui.modalOverlay.addEventListener('click', (e) => { if(e.target === ui.modalOverlay) App.Utils.closeModals(); });
                     
+                    // Modals Action
+                    ui.renameBtn.addEventListener('click', App.FS.renameItem);
+                    ui.insertTableBtn.addEventListener('click', App.Tools.insertTable);
+                    ui.insertImageBtn.addEventListener('click', App.Tools.insertImage);
+                    
+                    // Context Menu
                     ui.ctxDelete.addEventListener('click', App.FS.deleteItem);
                     ui.ctxRename.addEventListener('click', App.FS.openRenameModal);
                     ui.ctxDuplicate.addEventListener('click', App.FS.duplicateItem);
@@ -447,6 +496,7 @@
                         ui.ctxMenu.style.top = `${e.pageY}px`;
                     });
 
+                    // Drag & Drop Delegation
                     ui.fileTree.addEventListener('dragstart', (e) => {
                         const item = e.target.closest('.tree-item');
                         if (!item) return;
@@ -500,6 +550,17 @@
                     ui.resizer1.addEventListener('mousedown', e => App.Editor.startResize(e, 0));
                     ui.resizer2.addEventListener('mousedown', e => App.Editor.startResize(e, 2));
                     ui.resizer3.addEventListener('mousedown', e => App.Editor.startResize(e, 4));
+
+                    // Modal Inputs Enter Key
+                    document.querySelectorAll('.modal input').forEach(input => {
+                        input.addEventListener('keydown', e => {
+                            if(e.key === 'Enter') {
+                                const modal = input.closest('.modal');
+                                const confirmBtn = modal.querySelector('.btn.primary');
+                                if(confirmBtn) confirmBtn.click();
+                            }
+                        });
+                    });
                 },
                 initResizers() {
                     const setup = (id, colIdx) => {
@@ -607,16 +668,12 @@
                     const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
                     a.download = App.state.currentHandle ? App.state.currentHandle.name : 'doc.md';
                     a.click();
-                    URL.revokeObjectURL(a.href);
                 },
                 openCreateModal(type) {
-                    if(!App.state.rootHandle) return alert('프로젝트 폴더를 먼저 열어주세요.');
+                    if(!App.state.rootHandle) return alert('폴더를 열어주세요.');
                     App.state.createType = type;
                     App.ui.modalTitle.innerText = type === 'file' ? '새 파일 생성' : '새 폴더 생성';
-                    App.ui.modalOverlay.style.display = 'flex';
-                    App.ui.newItemModal.classList.remove('hidden');
-                    App.ui.renameModal.classList.add('hidden');
-                    App.ui.tableModal.classList.add('hidden');
+                    App.Utils.openModal('newItemModal');
                     App.ui.newItemName.value = ''; App.ui.newItemName.focus();
                 },
                 async createItem() {
@@ -632,19 +689,12 @@
                 async deleteItem() {
                     const t = App.state.contextTarget;
                     if(!t || !confirm(`'${t.handle.name}' 삭제하시겠습니까?`)) return;
-                    try {
-                        await t.parent.removeEntry(t.handle.name, { recursive: true });
-                        if(App.state.currentHandle === t.handle) { App.ui.editor.value = ''; App.state.currentHandle = null; }
-                        App.FS.refreshTree();
-                    } catch(e) { alert('삭제 실패: ' + e.message); }
+                    try { await t.parent.removeEntry(t.handle.name, { recursive: true }); await App.FS.refreshTree(); } catch(e) { alert('삭제 실패'); }
                 },
                 openRenameModal() {
                     if(!App.state.contextTarget) return;
                     App.ui.renameInput.value = App.state.contextTarget.handle.name;
-                    App.ui.modalOverlay.style.display = 'flex';
-                    App.ui.renameModal.classList.remove('hidden');
-                    App.ui.newItemModal.classList.add('hidden');
-                    App.ui.tableModal.classList.add('hidden');
+                    App.Utils.openModal('renameModal');
                     App.ui.renameInput.focus();
                 },
                 async renameItem() {
@@ -688,16 +738,26 @@
                 handleToolbar(e) {
                     const btn = e.target.closest('button'); if(!btn || !btn.dataset.cmd) return;
                     const cmd = btn.dataset.cmd;
-                    if(cmd === 'table') return (App.ui.modalOverlay.style.display='flex', App.ui.tableModal.classList.remove('hidden'), App.ui.newItemModal.classList.add('hidden'), App.ui.renameModal.classList.add('hidden'));
-                    if(cmd === 'frontmatter') return; // Handled by dropdown logic
+                    // Modal Triggers
+                    if(cmd === 'table') return App.Utils.openModal('tableModal');
+                    if(cmd === 'image') return App.Utils.openModal('imageModal');
+                    if(cmd === 'frontmatter') return;
+
+                    // Markdown Injection
+                    const t = { 
+                        bold:['**','**'], italic:['*','*'], strike:['~~','~~'], h2:['## ',''], h3:['### ',''], 
+                        code:['```\n','\n```'], link:['[','](url)'], admonition:[':::tip\n','\n:::'], 
+                        tabs:['<Tabs>\n  <TabItem value="1" label="Tab 1">Content</TabItem>\n</Tabs>',''], 
+                        details:['<details>\n<summary>Title</summary>\nContent\n</details>',''], 
+                        task:['- [ ] ',''], quote:['> ',''], hr:['---\n',''], inline:['`','`']
+                    }[cmd];
                     
-                    const t = { bold:['**','**'], italic:['*','*'], h2:['## ',''], h3:['### ',''], code:['```\n','\n```'], link:['[','](url)'], admonition:[':::tip\n','\n:::'], details:['<details>\n<summary>Title</summary>\nContent\n</details>',''] }[cmd];
-                    
-                    if(t) {
-                        const ed = App.ui.editor;
-                        ed.setRangeText(t[0] + ed.value.substring(ed.selectionStart, ed.selectionEnd) + t[1], ed.selectionStart, ed.selectionEnd, 'select');
-                        ed.focus(); App.Preview.render(ed.value);
-                    }
+                    if(t) App.Editor.insertText(t[0], t[1]);
+                },
+                insertText(pre, post) {
+                    const ed = App.ui.editor;
+                    ed.setRangeText(pre + ed.value.substring(ed.selectionStart, ed.selectionEnd) + post, ed.selectionStart, ed.selectionEnd, 'select');
+                    ed.focus(); App.Preview.render(ed.value);
                 },
                 insertTemplate(type) {
                     const templates = {
@@ -714,6 +774,22 @@
                 updateStats(text) {
                     const words = text.trim().split(/\s+/).filter(x=>x).length;
                     App.ui.wordCount.innerText = `단어: ${words}`;
+                }
+            },
+
+            Tools: {
+                insertTable() {
+                    const r = parseInt(document.getElementById('tableRows').value)||3, c = parseInt(document.getElementById('tableCols').value)||3;
+                    let txt = '\n| ' + Array(c).fill('Head').join(' | ') + ' |\n| ' + Array(c).fill('---').join(' | ') + ' |\n';
+                    for(let i=0; i<r; i++) txt += '| ' + Array(c).fill('Cell').join(' | ') + ' |\n';
+                    App.Editor.insertText(txt, '');
+                    App.Utils.closeModals();
+                },
+                insertImage() {
+                    const url = document.getElementById('imageUrl').value;
+                    const alt = document.getElementById('imageAlt').value;
+                    if(url) App.Editor.insertText(`![${alt}](${url})`, '');
+                    App.Utils.closeModals();
                 }
             },
 
@@ -808,7 +884,19 @@
                 },
                 updateSaveBtnState() { App.ui.saveBtn.classList.toggle('dirty', App.state.isDirty); },
                 showStatus(m) { App.ui.statusMsg.innerText = m; },
+                
+                openModal(id) {
+                    App.ui.modalOverlay.style.display = 'flex';
+                    document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'));
+                    const target = document.getElementById(id);
+                    if(target) {
+                        target.classList.remove('hidden');
+                        const input = target.querySelector('input');
+                        if(input) input.focus();
+                    }
+                },
                 closeModals() { App.ui.modalOverlay.style.display = 'none'; document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden')); },
+                
                 toggleLoading(s) { App.ui.spinner.classList.toggle('hidden', !s); },
                 escapeHtml(s) { return s?.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); },
                 parseFM(text) {
