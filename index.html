@@ -18,11 +18,10 @@
             --bg-main: #ffffff; --bg-sidebar: #f6f8fa; --bg-toolbar: #ffffff; --bg-status: #f0f0f0; --bg-modal: #ffffff;
             --text-main: #24292f; --text-sub: #57606a;
             --border: #d0d7de;
-            --primary: #5e35b1; /* Elice-like Purple/Blue for better visibility */
+            --primary: #5e35b1;
             --primary-hover: #4527a0; --primary-light: rgba(94, 53, 177, 0.1);
             --code-bg: #f6f8fa; --header-bg: #242526; --header-text: #fff;
             --overlay: rgba(0, 0, 0, 0.5);
-            
             /* Admonitions */
             --note-bg: #f5f6f7; --note-border: #9e9e9e; --tip-bg: #f0fdf4; --tip-border: #25c2a0;
             --info-bg: #eff6ff; --info-border: #60a5fa; --warn-bg: #fffbf0; --warn-border: #fbbf24;
@@ -72,7 +71,6 @@
         .tree-item.active { background: var(--primary-light); color: var(--primary); border-left: 3px solid var(--primary); padding-left: 5px; }
         .tree-item[draggable="true"] { cursor: grab; }
         .tree-item.drag-over { background: var(--primary-light); border: 2px dashed var(--primary); border-radius: 4px; }
-        
         .tree-content.drag-over { background: var(--primary-light); border: 2px dashed var(--primary); }
         .empty-msg { padding: 30px; text-align: center; color: var(--text-sub); font-size: 13px; line-height: 1.5; }
 
@@ -136,19 +134,20 @@
         #preview blockquote { border-left: 4px solid var(--primary); padding-left: 16px; margin: 0 0 16px; background: var(--primary-light); }
         #preview img { max-width: 100%; border-radius: 6px; }
 
-        /* [NEW] Simple Docusaurus JSON Style */
-        .category-container { padding: 20px 0; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
-        .cat-title { font-size: 2.5rem; font-weight: 800; color: var(--text-main); margin: 0 0 16px 0; line-height: 1.2; }
-        .cat-desc { font-size: 1.1rem; color: var(--text-sub); line-height: 1.6; margin-bottom: 24px; }
-        .cat-meta-box { 
-            background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 8px; padding: 16px;
-            font-size: 0.9rem; color: var(--text-sub);
+        /* [NEW] Simple Docusaurus JSON Style (Corrected) */
+        .category-page-header { padding: 20px 0 40px 0; border-bottom: 1px solid var(--border); margin-bottom: 30px; }
+        .cat-title { font-size: 3rem !important; font-weight: 800 !important; color: var(--text-main); margin: 0 0 20px 0 !important; border: none !important; padding: 0 !important; }
+        .cat-desc { font-size: 1.25rem; color: var(--text-sub); line-height: 1.6; margin: 0; }
+        .cat-metadata-tag { 
+            display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; 
+            background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 6px;
+            font-size: 0.8rem; color: var(--text-sub); margin-top: 20px;
         }
-        .cat-meta-item { display: inline-block; margin-right: 20px; margin-bottom: 8px; }
-        .cat-meta-label { font-weight: 600; color: var(--text-main); margin-right: 6px; }
+        .cat-metadata-tag strong { color: var(--primary); }
         
         .json-error { padding: 20px; background: var(--danger-bg); border: 1px solid var(--danger-border); color: #d32f2f; border-radius: 8px; margin-bottom: 20px; }
-        .json-source-header { margin-top: 40px; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 10px; font-weight: bold; color: var(--text-sub); font-size: 0.85em; text-transform: uppercase; }
+        .json-source-view { margin-top: 50px; border-top: 1px dashed var(--border); padding-top: 20px; opacity: 0.6; }
+        .json-source-view summary { font-size: 0.85em; color: var(--text-sub); cursor: pointer; }
 
         /* Modals & Utils */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--overlay); display: none; justify-content: center; align-items: center; z-index: 1000; }
@@ -253,6 +252,7 @@
 
     <!-- Modals -->
     <div id="modalOverlay" class="modal-overlay">
+        <!-- New Item Modal -->
         <div id="newItemModal" class="modal hidden">
             <h3 id="modalTitle">새 항목 생성</h3>
             <div class="modal-body">
@@ -263,6 +263,7 @@
                 <button class="btn primary" id="createItemBtn">확인</button>
             </div>
         </div>
+        <!-- Table Modal (Reuse) -->
         <div id="tableModal" class="modal hidden">
             <h3>표 생성하기</h3>
             <div class="modal-body">
@@ -274,6 +275,7 @@
                 <button class="btn primary" id="insertTableBtn">삽입</button>
             </div>
         </div>
+        <!-- Rename Modal -->
         <div id="renameModal" class="modal hidden">
             <h3>이름 변경</h3>
             <div class="modal-body">
@@ -613,11 +615,11 @@
                             if(srcH.kind === 'file') {
                                 const f = await srcH.getFile();
                                 const nf = await dstH.getFileHandle(targetName, { create: true });
-                                const w = await nf.createWritable();
-                                await w.write(f); await w.close();
+                                const writable = await nf.createWritable();
+                                await writable.write(f); await writable.close();
                             } else {
                                 const nd = await dstH.getDirectoryHandle(targetName, { create: true });
-                                for await (const e of srcH.values()) await copy(e, nd, e.name);
+                                for await (const entry of srcH.values()) await copy(entry, nd, entry.name);
                             }
                         };
                         await copy(s, destDirHandle, name);
@@ -677,31 +679,30 @@
                         App.ui.tocList.innerHTML = '';
                         try {
                             const data = JSON.parse(text);
-                            // Simple Docusaurus Style Preview
+                            // Corrected Simple Docusaurus Style Preview
                             if (data.label || data.position || data.link || data.collapsible !== undefined || data.className) {
-                                let html = `<div class="category-container">`;
+                                let html = `<div class="category-page-preview">`;
                                 
-                                // 1. Title (Label)
+                                // 1. Title (H1)
                                 html += `<h1 class="cat-title">${App.Utils.escapeHtml(data.label || 'Untitled Category')}</h1>`;
                                 
-                                // 2. Description
+                                // 2. Lead Description (Large text)
                                 if (data.link && data.link.description) {
                                     html += `<p class="cat-desc">${App.Utils.escapeHtml(data.link.description)}</p>`;
-                                } else if (!data.link) {
-                                    html += `<p class="cat-desc" style="color:var(--text-sub); font-style:italic;">(설명이 없습니다)</p>`;
                                 }
 
-                                // 3. Meta Data Box (Simple List)
-                                html += `<div class="cat-meta-box">`;
-                                if (data.position) html += `<div class="cat-meta-item"><span class="cat-meta-label">Position:</span>${data.position}</div>`;
-                                if (data.collapsible !== undefined) html += `<div class="cat-meta-item"><span class="cat-meta-label">Collapsible:</span>${data.collapsible}</div>`;
-                                if (data.collapsed !== undefined) html += `<div class="cat-meta-item"><span class="cat-meta-label">Collapsed:</span>${data.collapsed}</div>`;
-                                if (data.className) html += `<div class="cat-meta-item"><span class="cat-meta-label">Class:</span>${data.className}</div>`;
-                                if (data.link && data.link.type) html += `<div class="cat-meta-item"><span class="cat-meta-label">Type:</span>${data.link.type}</div>`;
+                                // 3. Divider
+                                html += `<hr style="border:none; border-top:1px solid var(--border); margin: 30px 0;">`;
+
+                                // 4. Subtle Meta Information
+                                html += `<div style="display:flex; gap:15px; flex-wrap:wrap; opacity:0.7;">`;
+                                if (data.position) html += `<span class="cat-metadata-tag"><strong>Position:</strong> ${data.position}</span>`;
+                                if (data.collapsible !== undefined) html += `<span class="cat-metadata-tag"><strong>Collapsible:</strong> ${data.collapsible}</span>`;
+                                if (data.link && data.link.type) html += `<span class="cat-metadata-tag"><strong>Type:</strong> ${data.link.type}</span>`;
                                 html += `</div></div>`;
                                 
-                                // 4. Source Code
-                                html += `<div class="json-source-header">JSON Source</div><pre><code class="language-json">${App.Utils.escapeHtml(text)}</code></pre>`;
+                                // 5. Hidden Source Code (Toggle-able)
+                                html += `<div class="json-source-view"><details><summary>View Raw JSON Source</summary><pre><code class="language-json">${App.Utils.escapeHtml(text)}</code></pre></details></div>`;
                                 
                                 App.ui.preview.innerHTML = html;
                             } else {
