@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CXO Markdown Editor</title>
     
-    <!-- 필수 라이브러리 -->
+    <!-- External Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
@@ -36,7 +36,6 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; height: 100vh; display: flex; flex-direction: column; background: var(--bg-main); color: var(--text-main); overflow: hidden; }
 
-        /* Header */
         header { height: 50px; background: var(--header-bg); color: var(--header-text); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; user-select: none; z-index: 100; }
         .brand { font-weight: 800; font-size: 1.1rem; } .brand span { color: #a29bfe; }
         .controls { display: flex; align-items: center; gap: 8px; }
@@ -69,7 +68,7 @@
         .resizer { background: transparent; cursor: col-resize; z-index: 50; transition: background 0.2s; }
         .resizer:hover, .resizer.dragging { background: var(--primary); opacity: 0.4; }
 
-        /* Sidebar */
+        /* Sidebar UI */
         .sidebar-header { padding: 10px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
         .search-box { width: 100%; padding: 6px 10px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg-main); color: var(--text-main); font-size: 12px; outline: none; }
         .sidebar-actions { display: flex; gap: 4px; }
@@ -80,8 +79,9 @@
         .tree-item { padding: 4px 12px; cursor: pointer; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 6px; color: var(--text-main); line-height: 1.8; border: 1px solid transparent; }
         .tree-item:hover { background: rgba(127,127,127,0.1); }
         .tree-item.active { background: var(--primary-light); color: var(--primary); border-left: 3px solid var(--primary); padding-left: 9px; }
+        .tree-item.drag-over { background: var(--primary-light); border: 2px dashed var(--primary); }
 
-        /* Editor */
+        /* Toolbar & Editor */
         .toolbar { padding: 6px 8px; border-bottom: 1px solid var(--border); background: var(--bg-toolbar); display: flex; gap: 4px; flex-wrap: wrap; user-select: none; }
         .toolbar button { background: transparent; border: 1px solid transparent; color: var(--text-main); padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 13px; }
         .toolbar button:hover { background: rgba(127,127,127,0.1); }
@@ -90,25 +90,23 @@
         .status-bar { height: 26px; background: var(--bg-status); border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: flex-end; padding: 0 16px; font-size: 11px; color: var(--text-sub); gap: 16px; }
         .status-msg { margin-right: auto; font-weight: 600; color: var(--text-main); }
 
-        /* Preview */
+        /* Preview Area */
         .doc-header { padding: 30px 40px 10px; font-size: 2em; font-weight: 800; color: var(--text-main); }
         #preview { flex: 1; padding: 10px 40px 50px; overflow-y: auto; font-size: 16px; line-height: 1.7; scroll-behavior: smooth; overflow-wrap: break-word; }
 
-        /* Docusaurus Index UI */
+        /* [NEW] Docusaurus Card Style Navigation */
         .category-page-header { padding-bottom: 30px; border-bottom: 1px solid var(--border); margin-bottom: 30px; }
-        .cat-title { font-size: 2.8rem !important; font-weight: 800 !important; color: var(--text-main); border: none !important; margin: 0 0 16px 0 !important; }
-        .cat-desc { 
-            font-size: 1.2rem; color: var(--text-sub); line-height: 1.6; margin: 0;
-            display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;
-        }
+        .cat-title { font-size: 3rem !important; font-weight: 800 !important; color: var(--text-main); border: none !important; margin: 0 0 16px 0 !important; }
+        .cat-desc { font-size: 1.25rem; color: var(--text-sub); line-height: 1.6; margin: 0; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
         
         .index-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 20px; }
         .index-card { 
             display: flex; flex-direction: column; padding: 24px; border: 1px solid var(--border); border-radius: 8px; 
             transition: all 0.2s; background: var(--bg-main); text-decoration: none; color: inherit; min-height: 110px;
+            cursor: pointer;
         }
         .index-card:hover { border-color: var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-2px); }
-        .index-card-title { font-weight: 700; font-size: 1.15rem; color: var(--primary); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+        .index-card-title { font-weight: 700; font-size: 1.2rem; color: var(--primary); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
         .index-card-desc { 
             font-size: 0.95rem; color: var(--text-sub); line-height: 1.5;
             display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;
@@ -121,12 +119,6 @@
         .toc-link { display: block; color: var(--text-sub); text-decoration: none; padding-left: 12px; cursor: pointer; border-left: 2px solid transparent; margin-left: -1px; font-size: 12px; line-height: 1.5; margin-bottom: 4px; }
         .toc-link:hover, .toc-link.active { color: var(--primary); }
         .toc-link.active { border-left-color: var(--primary); font-weight: 600; }
-
-        /* Markdown elements */
-        #preview h2, #preview h3 { margin-top: 32px; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
-        #preview code { background: rgba(135,131,120,0.1); padding: 0.2em 0.4em; border-radius: 4px; font-family: monospace; font-size: 90%; }
-        #preview pre { background: var(--code-bg); padding: 16px; border-radius: 8px; overflow: auto; margin-bottom: 20px; }
-        #preview blockquote { border-left: 4px solid var(--primary); padding: 10px 20px; background: var(--primary-light); border-radius: 0 8px 8px 0; margin-bottom: 20px; }
 
         /* Modals */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--overlay); display: none; justify-content: center; align-items: center; z-index: 1000; }
@@ -141,14 +133,11 @@
         .spinner { position: absolute; top: 50%; left: 50%; width: 30px; height: 30px; border: 3px solid rgba(0,0,0,0.1); border-top: 3px solid var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; z-index: 100; transform: translate(-50%, -50%); }
         @keyframes spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
         
-        /* Context Menu */
         .context-menu { position: absolute; background: var(--bg-modal); border: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 4px; z-index: 2000; display: none; width: 150px; overflow: hidden; }
         .ctx-item { padding: 10px 14px; cursor: pointer; font-size: 13px; color: var(--text-main); border-bottom: 1px solid var(--border); }
         .ctx-item:last-child { border-bottom: none; }
         .ctx-item:hover { background: var(--primary-light); color: var(--primary); }
         .ctx-item.delete { color: var(--danger-border); }
-        
-        @media (max-width: 1200px) { .toc-area { display: none; } }
     </style>
 </head>
 <body>
@@ -232,7 +221,7 @@
     <div id="modalOverlay" class="modal-overlay">
         <div id="newItemModal" class="modal hidden">
             <h3 id="modalTitle">새 항목 생성</h3>
-            <div class="input-group"><label>이름</label><input type="text" id="newItemName" placeholder="이름을 입력하세요"></div>
+            <div class="input-group"><label>이름</label><input type="text" id="newItemName" placeholder="파일명/폴더명 입력"></div>
             <div class="modal-footer">
                 <button class="btn" id="closeNewItemModal">취소</button>
                 <button class="btn primary" id="createItemBtn">확인</button>
@@ -259,7 +248,7 @@
             state: {
                 rootHandle: null, currentHandle: null, activeFolderHandle: null,
                 theme: localStorage.getItem('theme') || 'light',
-                isDirty: false, contextTarget: null, dragSource: null, 
+                isDirty: false, contextTarget: null, dragSource: null,
                 autoSave: localStorage.getItem('autoSave') === 'true',
                 columnWidths: JSON.parse(localStorage.getItem('split-pos')) || [240, 4, 500, 4, 500, 4, 220]
             },
@@ -278,8 +267,8 @@
                     'openFolderBtn', 'saveBtn', 'downloadBtn', 'fileTree', 'editor', 'preview', 
                     'docHeader', 'toolbar', 'themeToggle', 'spinner', 'tocList', 'mainLayout',
                     'statusMsg', 'autoSaveToggle', 'modalOverlay', 'newItemModal', 'newItemName', 
-                    'createItemBtn', 'closeNewItemModal', 'modalTitle', 'ctxMenu', 'ctxDelete', 
-                    'ctxRename', 'ctxDuplicate', 'renameModal', 'renameInput', 'renameBtn', 
+                    'createItemBtn', 'closeNewItemModal', 'ctxMenu', 'ctxDelete', 'ctxRename', 
+                    'ctxDuplicate', 'renameModal', 'renameInput', 'renameBtn', 
                     'closeRenameModal', 'searchInput'
                 ];
                 ids.forEach(id => this.ui[id] = document.getElementById(id));
@@ -349,6 +338,7 @@
 
                     document.addEventListener('click', () => ui.ctxMenu.style.display = 'none');
                     
+                    // Event Delegation for Tree
                     ui.fileTree.addEventListener('click', (e) => {
                         const item = e.target.closest('.tree-item');
                         if (!item) return;
@@ -374,31 +364,34 @@
                         ui.ctxMenu.style.top = `${e.pageY}px`;
                     });
 
-                    ui.fileTree.addEventListener('dragstart', (e) => {
-                        const item = e.target.closest('.tree-item');
-                        if (!item) return;
-                        App.state.dragSource = { handle: item._handle, parent: item._parent };
-                        e.dataTransfer.effectAllowed = 'move';
+                    // [NEW] Event Delegation for Preview Index Cards
+                    ui.preview.addEventListener('click', async (e) => {
+                        const card = e.target.closest('.index-card');
+                        if (card && card.dataset.name) {
+                            const fileName = card.dataset.name;
+                            const folder = App.state.activeFolderHandle;
+                            if (folder) {
+                                try {
+                                    const fileHandle = await folder.getFileHandle(fileName);
+                                    App.FS.loadFile(fileHandle);
+                                    // Sidebar Sync
+                                    const items = ui.fileTree.querySelectorAll('.tree-item');
+                                    items.forEach(it => {
+                                        if (it._handle && it._handle.name === fileName) {
+                                            items.forEach(el => el.classList.remove('active'));
+                                            it.classList.add('active');
+                                            it.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                                        }
+                                    });
+                                } catch (err) { console.error('카드 클릭 시 파일 로드 실패:', err); }
+                            }
+                        }
                     });
-                    ui.fileTree.addEventListener('dragover', (e) => {
-                        e.preventDefault(); e.stopPropagation();
-                        const item = e.target.closest('.tree-item');
-                        if (item && item.dataset.kind === 'directory') item.classList.add('drag-over');
-                        else if (App.state.rootHandle) ui.fileTree.classList.add('drag-over');
-                    });
-                    ui.fileTree.addEventListener('dragleave', (e) => {
-                        const item = e.target.closest('.tree-item');
-                        if (item) item.classList.remove('drag-over');
-                        else ui.fileTree.classList.remove('drag-over');
-                    });
-                    ui.fileTree.addEventListener('drop', async (e) => {
-                        e.preventDefault(); e.stopPropagation();
-                        ui.fileTree.classList.remove('drag-over');
-                        document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
-                        const targetItem = e.target.closest('.tree-item');
-                        let destDir = (targetItem && targetItem.dataset.kind === 'directory') ? targetItem._handle : App.state.rootHandle;
-                        if (App.state.dragSource && destDir) await App.FS.transferEntry(App.state.dragSource, destDir, null, true);
-                    });
+
+                    // Resizers
+                    ui.resizer1.addEventListener('mousedown', e => App.Editor.startResize(e, 0));
+                    ui.resizer2.addEventListener('mousedown', e => App.Editor.startResize(e, 2));
+                    ui.resizer3.addEventListener('mousedown', e => App.Editor.startResize(e, 4));
                 },
                 initResizers() {
                     const setup = (id, colIdx) => {
@@ -424,9 +417,7 @@
                             document.addEventListener('mouseup', onMouseUp);
                         });
                     };
-                    setup('resizer1', 0);
-                    setup('resizer2', 2);
-                    setup('resizer3', 4);
+                    setup('resizer1', 0); setup('resizer2', 2); setup('resizer3', 4);
                 }
             },
 
@@ -485,7 +476,11 @@
                         }
                     }
                     if(target) await this.loadFile(target);
-                    else { App.state.currentHandle = null; App.ui.editor.value = ""; App.Preview.render(""); }
+                    else {
+                        App.state.currentHandle = null;
+                        App.ui.editor.value = "";
+                        App.Preview.render("");
+                    }
                 },
                 async saveFileToDisk(silent = false) {
                     if (!App.state.currentHandle) return;
@@ -505,7 +500,7 @@
                     a.click();
                 },
                 openCreateModal(type) {
-                    if(!App.state.rootHandle) return alert('폴더를 먼저 열어주세요.');
+                    if(!App.state.rootHandle) return alert('폴더를 열어주세요.');
                     App.state.createType = type;
                     App.ui.modalTitle.innerText = type === 'file' ? '새 파일 생성' : '새 폴더 생성';
                     App.ui.modalOverlay.style.display = 'flex';
@@ -620,13 +615,21 @@
                                             const file = await entry.getFile();
                                             const content = await file.text();
                                             const meta = App.Utils.parseFM(content);
-                                            cards.push({ title: meta.title || entry.name, pos: meta.sidebar_position || 999, desc: meta.description || App.Utils.extractSummary(meta.body) });
+                                            cards.push({ 
+                                                handle: entry, 
+                                                title: meta.title || entry.name, 
+                                                pos: meta.sidebar_position || 999, 
+                                                desc: meta.description || App.Utils.extractSummary(meta.body) 
+                                            });
                                         }
                                     }
                                 }
                                 cards.sort((a, b) => a.pos - b.pos);
                                 cards.forEach(c => {
-                                    html += `<div class="index-card"><div class="index-card-title">📄 ${App.Utils.escapeHtml(c.title)}</div><div class="index-card-desc">${App.Utils.escapeHtml(c.desc)}</div></div>`;
+                                    html += `<div class="index-card" data-name="${App.Utils.escapeHtml(c.handle.name)}">
+                                        <div class="index-card-title">📄 ${App.Utils.escapeHtml(c.title)}</div>
+                                        <div class="index-card-desc">${App.Utils.escapeHtml(c.desc)}</div>
+                                    </div>`;
                                 });
                                 html += `</div><div style="margin-top:60px; border-top:1px dashed var(--border); padding-top:20px;"><details><summary style="font-size:0.85rem; color:var(--text-sub)">설정 원본(JSON) 보기</summary><pre><code class="language-json">${App.Utils.escapeHtml(text)}</code></pre></details></div>`;
                                 App.ui.preview.innerHTML = html;
