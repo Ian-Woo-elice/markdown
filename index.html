@@ -278,7 +278,7 @@
                     'statusMsg', 'autoSaveToggle', 'modalOverlay', 'newItemModal', 'newItemName', 
                     'createItemBtn', 'closeNewItemModal', 'modalTitle', 'ctxMenu', 'ctxDelete', 
                     'ctxRename', 'ctxDuplicate', 'renameModal', 'renameInput', 'renameBtn', 
-                    'closeRenameModal', 'searchInput'
+                    'closeRenameModal', 'searchInput', 'newFileBtn', 'newFolderBtn', 'refreshBtn'
                 ];
                 ids.forEach(id => this.ui[id] = document.getElementById(id));
                 // Resizers
@@ -609,32 +609,42 @@
 
             Editor: {
                 handleToolbar(e) {
-                    const cmd = e.target.closest('button')?.dataset.cmd;
-                    if(!cmd) return;
-                    const t = { bold:['**','**'], italic:['*','*'], h2:['## ',''], h3:['### ',''], code:['```\n','\n```'], admonition:[':::tip\n','\n:::'], table:['\n| Header | Header |\n| --- | --- |\n| Cell | Cell |\n',''], frontmatter:['---\ntitle: \nsidebar_position: \ndescription: \n---\n\n',''] }[cmd];
+                    const btn = e.target.closest('button'); if(!btn || !btn.dataset.cmd) return;
+                    const cmd = btn.dataset.cmd;
+                    if(cmd === 'table') return (App.ui.modalOverlay.style.display='flex', App.ui.tableModal.classList.remove('hidden'), App.ui.newItemModal.classList.add('hidden'), App.ui.renameModal.classList.add('hidden'));
+                    
+                    const t = { bold:['**','**'], italic:['*','*'], h2:['## ',''], h3:['### ',''], code:['```\n','\n```'], link:['[','](url)'], admonition:[':::tip\n','\n:::'], tabs:['<Tabs>\n  <TabItem value="1" label="Tab 1">Content</TabItem>\n</Tabs>',''], details:['<details>\n<summary>Title</summary>\nContent\n</details>',''], frontmatter:['---\ntitle: Doc\n---\n\n',''] }[cmd];
+                    
                     if(t) {
                         const ed = App.ui.editor;
                         ed.setRangeText(t[0] + ed.value.substring(ed.selectionStart, ed.selectionEnd) + t[1], ed.selectionStart, ed.selectionEnd, 'select');
                         ed.focus(); App.Preview.render(ed.value);
                     }
                 },
+                insertTable() {
+                    const r = parseInt(document.getElementById('tableRows').value)||3, c = parseInt(document.getElementById('tableCols').value)||3;
+                    let txt = '\n| ' + Array(c).fill('Head').join(' | ') + ' |\n| ' + Array(c).fill('---').join(' | ') + ' |\n';
+                    for(let i=0; i<r; i++) txt += '| ' + Array(c).fill('Cell').join(' | ') + ' |\n';
+                    const ed = App.ui.editor;
+                    ed.setRangeText(txt, ed.selectionStart, ed.selectionEnd, 'end');
+                    App.Utils.closeModals(); App.Preview.render(ed.value);
+                },
+                handleTab(e) {
+                    if(e.key === 'Tab') {
+                        e.preventDefault();
+                        e.target.setRangeText('  ', e.target.selectionStart, e.target.selectionEnd, 'end');
+                        App.Preview.render(e.target.value);
+                    }
+                },
                 updateStats(text) {
-                    const words = text.trim().split(/\s+/).filter(x=>x).length;
-                    App.ui.wordCount.innerText = `단어: ${words}`;
-                }
-            },
-
-            Sidebar: {
-                filter(k) {
-                    const items = App.ui.fileTree.querySelectorAll('.tree-item');
-                    items.forEach(i => i.style.display = i.innerText.toLowerCase().includes(k.toLowerCase()) ? 'flex' : 'none');
+                    const w = text.trim().split(/\s+/).filter(x=>x).length;
+                    App.ui.wordCount.innerText = `단어: ${w}`;
                 }
             },
 
             Preview: {
                 async render(text) {
                     const isJson = App.state.currentHandle?.name.endsWith('.json');
-                    
                     if (isJson) {
                         App.ui.docHeader.innerText = App.state.currentHandle.name;
                         App.ui.tocList.innerHTML = '';
