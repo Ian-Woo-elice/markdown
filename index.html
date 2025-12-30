@@ -81,7 +81,7 @@
         .tree-item.active { background: var(--primary-light); color: var(--primary); border-left: 3px solid var(--primary); padding-left: 9px; }
         .tree-item.drag-over { background: var(--primary-light); border: 2px dashed var(--primary); }
 
-        /* [NEW] Sidebar Empty State */
+        /* Sidebar Empty State */
         .empty-state-container {
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             height: 100%; padding: 20px; text-align: center; color: var(--text-sub);
@@ -105,7 +105,7 @@
         .status-bar { height: 26px; background: var(--bg-status); border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: flex-end; padding: 0 16px; font-size: 11px; color: var(--text-sub); gap: 16px; }
         .status-msg { margin-right: auto; font-weight: 600; color: var(--text-main); }
 
-        /* [NEW] Dropdown Menu */
+        /* Dropdown Menu */
         .dropdown { position: relative; display: inline-block; }
         .dropdown-menu {
             display: none; position: absolute; top: 100%; left: 0; min-width: 160px;
@@ -158,6 +158,14 @@
         #preview code { background: rgba(135,131,120,0.1); padding: 0.2em 0.4em; border-radius: 4px; font-family: monospace; font-size: 90%; }
         #preview pre { background: var(--code-bg); padding: 16px; border-radius: 8px; overflow: auto; margin-bottom: 20px; }
         #preview blockquote { border-left: 4px solid var(--primary); padding: 10px 20px; background: var(--primary-light); border-radius: 0 8px 8px 0; margin-bottom: 20px; }
+        #preview img { max-width: 100%; border-radius: 6px; }
+
+        /* [NEW] Table Styles for Preview */
+        .markdown-body table { width: 100%; border-collapse: collapse; margin-bottom: 16px; display: table; }
+        .markdown-body th, .markdown-body td { border: 1px solid var(--border); padding: 8px 12px; line-height: 1.5; }
+        .markdown-body th { font-weight: 600; background-color: var(--bg-sidebar); }
+        .markdown-body tr:nth-child(2n) { background-color: var(--bg-sidebar); }
+        .markdown-body tr { background-color: var(--bg-main); border-top: 1px solid var(--border); }
 
         /* Modals */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--overlay); display: none; justify-content: center; align-items: center; z-index: 1000; }
@@ -316,18 +324,6 @@
                 <button class="btn primary" id="insertTableBtn">삽입</button>
             </div>
         </div>
-        <!-- Image Modal -->
-        <div id="imageModal" class="modal hidden">
-            <h3>이미지 삽입</h3>
-            <div class="modal-body">
-                <div class="input-group"><label>URL</label><input type="text" id="imageUrl" placeholder="https://..."></div>
-                <div class="input-group"><label>설명</label><input type="text" id="imageAlt" placeholder="이미지 설명 (Alt)"></div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn" id="closeImageModal">취소</button>
-                <button class="btn primary" id="insertImageBtn">삽입</button>
-            </div>
-        </div>
     </div>
 
     <div id="ctxMenu" class="context-menu">
@@ -364,8 +360,7 @@
                     'ctxRename', 'ctxDuplicate', 'renameModal', 'renameInput', 'renameBtn', 
                     'closeRenameModal', 'searchInput', 'newFileBtn', 'newFolderBtn', 'refreshBtn',
                     'sidebarOpenBtn', 'yamlBtn', 'yamlDropdown',
-                    'tableModal', 'tableRows', 'tableCols', 'insertTableBtn', 'closeTableModal',
-                    'imageModal', 'imageUrl', 'imageAlt', 'insertImageBtn', 'closeImageModal'
+                    'tableModal', 'tableRows', 'tableCols', 'insertTableBtn', 'closeTableModal'
                 ];
                 ids.forEach(id => this.ui[id] = document.getElementById(id));
                 // Resizers
@@ -387,7 +382,7 @@
                 bindEvents() {
                     const ui = App.ui;
                     ui.openFolderBtn.addEventListener('click', App.FS.openDirectory);
-                    ui.sidebarOpenBtn.addEventListener('click', App.FS.openDirectory); // Sidebar Button
+                    ui.sidebarOpenBtn.addEventListener('click', App.FS.openDirectory);
                     ui.saveBtn.addEventListener('click', () => App.FS.saveFileToDisk());
                     ui.downloadBtn.addEventListener('click', App.FS.downloadAsFile);
                     ui.refreshBtn.addEventListener('click', () => App.FS.refreshTree());
@@ -398,10 +393,9 @@
                         localStorage.setItem('autoSave', App.state.autoSave);
                     });
 
-                    ui.newFileBtn.addEventListener('click', () => App.Utils.openModal('newItemModal'));
+                    ui.newFileBtn.addEventListener('click', () => App.FS.openCreateModal('file'));
                     ui.newFolderBtn.addEventListener('click', () => { App.FS.openCreateModal('folder'); });
                     
-                    // Specific handler for file create modal to set type
                     ui.newFileBtn.onclick = () => App.FS.openCreateModal('file');
                     
                     ui.createItemBtn.addEventListener('click', App.FS.createItem);
@@ -417,6 +411,12 @@
 
                     ui.editor.addEventListener('input', (e) => {
                         App.state.isDirty = true;
+                        // [NEW] Untitled creation
+                        if (!App.state.currentHandle) {
+                            App.state.currentHandle = { name: 'untitled.md', kind: 'virtual' };
+                            App.ui.docHeader.innerText = 'untitled.md (저장되지 않음)';
+                        }
+                        
                         App.Utils.updateSaveBtnState();
                         if (App.state.autoSave) App.Utils.showStatus('입력 중...');
                         debouncedRender(e.target.value);
@@ -433,7 +433,6 @@
 
                     ui.toolbar.addEventListener('click', App.Editor.handleToolbar);
                     
-                    // YAML Dropdown
                     ui.yamlBtn.addEventListener('click', (e) => {
                         e.stopPropagation();
                         ui.yamlDropdown.classList.toggle('show');
@@ -453,24 +452,18 @@
 
                     ui.themeToggle.addEventListener('click', App.Utils.toggleTheme);
                     
-                    // Modals Close
                     ui.closeNewItemModal.addEventListener('click', App.Utils.closeModals);
                     ui.closeRenameModal.addEventListener('click', App.Utils.closeModals);
                     ui.closeTableModal.addEventListener('click', App.Utils.closeModals);
-                    ui.closeImageModal.addEventListener('click', App.Utils.closeModals);
                     ui.modalOverlay.addEventListener('click', (e) => { if(e.target === ui.modalOverlay) App.Utils.closeModals(); });
                     
-                    // Modals Action
                     ui.renameBtn.addEventListener('click', App.FS.renameItem);
                     ui.insertTableBtn.addEventListener('click', App.Tools.insertTable);
-                    ui.insertImageBtn.addEventListener('click', App.Tools.insertImage);
                     
-                    // Context Menu
                     ui.ctxDelete.addEventListener('click', App.FS.deleteItem);
                     ui.ctxRename.addEventListener('click', App.FS.openRenameModal);
                     ui.ctxDuplicate.addEventListener('click', App.FS.duplicateItem);
 
-                    // Event Delegation for Tree
                     ui.fileTree.addEventListener('click', (e) => {
                         const item = e.target.closest('.tree-item');
                         if (!item) return;
@@ -496,7 +489,6 @@
                         ui.ctxMenu.style.top = `${e.pageY}px`;
                     });
 
-                    // Drag & Drop Delegation
                     ui.fileTree.addEventListener('dragstart', (e) => {
                         const item = e.target.closest('.tree-item');
                         if (!item) return;
@@ -523,7 +515,6 @@
                         if (App.state.dragSource && destDir) await App.FS.transferEntry(App.state.dragSource, destDir, null, true);
                     });
                     
-                    // Preview Index Card Click Delegation
                     ui.preview.addEventListener('click', async (e) => {
                         const card = e.target.closest('.index-card');
                         if (card && card.dataset.name) {
@@ -546,12 +537,10 @@
                         }
                     });
 
-                    // Resizers
                     ui.resizer1.addEventListener('mousedown', e => App.Editor.startResize(e, 0));
                     ui.resizer2.addEventListener('mousedown', e => App.Editor.startResize(e, 2));
                     ui.resizer3.addEventListener('mousedown', e => App.Editor.startResize(e, 4));
 
-                    // Modal Inputs Enter Key
                     document.querySelectorAll('.modal input').forEach(input => {
                         input.addEventListener('keydown', e => {
                             if(e.key === 'Enter') {
@@ -652,6 +641,19 @@
                     }
                 },
                 async saveFileToDisk(silent = false) {
+                    // [NEW] Handle virtual untitled file
+                    if (App.state.currentHandle && App.state.currentHandle.kind === 'virtual') {
+                        try {
+                            const opts = { suggestedName: 'untitled.md', types: [{ description: 'Markdown File', accept: {'text/markdown': ['.md']} }] };
+                            const handle = await window.showSaveFilePicker(opts);
+                            App.state.currentHandle = handle; // Now real handle
+                            // Proceed to save below
+                        } catch (err) {
+                            if(err.name !== 'AbortError') alert('저장 취소');
+                            return;
+                        }
+                    }
+
                     if (!App.state.currentHandle) return !silent && alert('저장할 파일이 없습니다.');
                     try {
                         if(!silent || App.state.autoSave) App.Utils.showStatus('저장 중...');
@@ -668,9 +670,10 @@
                     const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
                     a.download = App.state.currentHandle ? App.state.currentHandle.name : 'doc.md';
                     a.click();
+                    URL.revokeObjectURL(a.href);
                 },
                 openCreateModal(type) {
-                    if(!App.state.rootHandle) return alert('폴더를 열어주세요.');
+                    if(!App.state.rootHandle) return alert('프로젝트 폴더를 먼저 열어주세요.');
                     App.state.createType = type;
                     App.ui.modalTitle.innerText = type === 'file' ? '새 파일 생성' : '새 폴더 생성';
                     App.Utils.openModal('newItemModal');
@@ -738,12 +741,11 @@
                 handleToolbar(e) {
                     const btn = e.target.closest('button'); if(!btn || !btn.dataset.cmd) return;
                     const cmd = btn.dataset.cmd;
-                    // Modal Triggers
                     if(cmd === 'table') return App.Utils.openModal('tableModal');
-                    if(cmd === 'image') return App.Utils.openModal('imageModal');
+                    // Image: No Modal, direct input
+                    if(cmd === 'image') return App.Editor.insertText('![Alt Text](URL)', ''); 
                     if(cmd === 'frontmatter') return;
 
-                    // Markdown Injection
                     const t = { 
                         bold:['**','**'], italic:['*','*'], strike:['~~','~~'], h2:['## ',''], h3:['### ',''], 
                         code:['```\n','\n```'], link:['[','](url)'], admonition:[':::tip\n','\n:::'], 
@@ -786,10 +788,7 @@
                     App.Utils.closeModals();
                 },
                 insertImage() {
-                    const url = document.getElementById('imageUrl').value;
-                    const alt = document.getElementById('imageAlt').value;
-                    if(url) App.Editor.insertText(`![${alt}](${url})`, '');
-                    App.Utils.closeModals();
+                    // Deprecated: Using Direct Insert
                 }
             },
 
@@ -801,7 +800,6 @@
                         App.ui.tocList.innerHTML = '';
                         try {
                             const data = JSON.parse(text);
-                            // Docusaurus Index Style
                             if (data.label || data.link) {
                                 let html = `<div class="category-page-header">
                                     <h1 class="cat-title">${App.Utils.escapeHtml(data.label || 'Category')}</h1>`;
@@ -840,7 +838,7 @@
                         } catch(e) { App.ui.preview.innerHTML = `<div class="admonition danger">JSON Syntax Error: ${e.message}</div>`; }
                     } else {
                         const { title, body } = App.Utils.parseFM(text);
-                        App.ui.docHeader.innerText = title || App.state.currentHandle?.name || "Untitled";
+                        App.ui.docHeader.innerText = title || (App.state.currentHandle?.kind === 'virtual' ? 'untitled.md (저장되지 않음)' : (App.state.currentHandle?.name || "Untitled"));
                         let html = marked.parse(body);
                         html = html.replace(/<p>:::(note|tip|info|warning|danger)([\s\S]*?):::<\/p>/g, (m,t,c)=>`<div class="admonition ${t}"><span class="admonition-title">${t}</span>${c}</div>`);
                         App.ui.preview.innerHTML = DOMPurify.sanitize(html, { ADD_TAGS:['tabs','tabitem','details','summary'], ADD_ATTR:['label','value', 'data-name'] });
