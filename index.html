@@ -16,10 +16,10 @@
         /* --- CSS Variables --- */
         :root {
             --bg-main: #ffffff; --bg-sidebar: #f6f8fa; --bg-toolbar: #ffffff; --bg-status: #f0f0f0; --bg-modal: #ffffff;
-            --text-main: #24292f; --text-sub: #57606a;
-            --border: #d0d7de;
+            --text-main: #1c1e21; --text-sub: #525860;
+            --border: #dadde1;
             --primary: #5e35b1;
-            --primary-hover: #4527a0; --primary-light: rgba(94, 53, 177, 0.1);
+            --primary-hover: #4527a0; --primary-light: rgba(94, 53, 177, 0.05);
             --code-bg: #f6f8fa; --header-bg: #242526; --header-text: #fff;
             --overlay: rgba(0, 0, 0, 0.5);
             /* Admonitions */
@@ -28,10 +28,10 @@
             --danger-bg: #fef2f2; --danger-border: #f87171;
         }
         body.dark-mode {
-            --bg-main: #0d1117; --bg-sidebar: #161b22; --bg-toolbar: #0d1117; --bg-status: #161b22; --bg-modal: #1c2128;
-            --text-main: #c9d1d9; --text-sub: #8b949e;
-            --border: #30363d; --code-bg: #161b22; --header-bg: #161b22;
-            --primary-light: rgba(94, 53, 177, 0.3); --overlay: rgba(0, 0, 0, 0.7);
+            --bg-main: #1b1b1d; --bg-sidebar: #242526; --bg-toolbar: #1b1b1d; --bg-status: #242526; --bg-modal: #242526;
+            --text-main: #e3e3e3; --text-sub: #a3a3a3;
+            --border: #3e4145; --code-bg: #242526; --header-bg: #1b1b1d;
+            --primary-light: rgba(140, 100, 230, 0.15); --overlay: rgba(0, 0, 0, 0.7);
             --note-bg: #303336; --tip-bg: #1e2923; --info-bg: #1c2633; --warn-bg: #2d2618; --danger-bg: #311c1d;
         }
 
@@ -71,10 +71,11 @@
         .tree-item.active { background: var(--primary-light); color: var(--primary); border-left: 3px solid var(--primary); padding-left: 5px; }
         .tree-item[draggable="true"] { cursor: grab; }
         .tree-item.drag-over { background: var(--primary-light); border: 2px dashed var(--primary); border-radius: 4px; }
+        
         .tree-content.drag-over { background: var(--primary-light); border: 2px dashed var(--primary); }
         .empty-msg { padding: 30px; text-align: center; color: var(--text-sub); font-size: 13px; line-height: 1.5; }
 
-        /* Editor & Preview */
+        /* Editor Area */
         .editor-area { display: flex; flex-direction: column; background: var(--bg-main); width: 45%; min-width: 200px; }
         .toolbar { padding: 6px 8px; border-bottom: 1px solid var(--border); background: var(--bg-toolbar); display: flex; gap: 4px; flex-wrap: wrap; user-select: none; }
         .toolbar button { background: transparent; border: 1px solid transparent; color: var(--text-main); padding: 4px 8px; border-radius: 4px; cursor: pointer; min-width: 28px; }
@@ -92,6 +93,7 @@
         .resizer { width: 6px; background: transparent; margin: 0 -3px; cursor: col-resize; z-index: 10; position: relative; }
         .resizer:hover { background: var(--primary); }
         
+        /* Preview Area */
         .preview-area { flex: 1; min-width: 200px; display: flex; flex-direction: column; background: var(--bg-main); position: relative; overflow: hidden; border-left: 1px solid var(--border); }
         .doc-header { padding: 30px 40px 10px; font-size: 2em; font-weight: 800; color: var(--text-main); line-height: 1.3; }
         #preview { 
@@ -108,48 +110,31 @@
         .toc-link.active { border-left-color: var(--primary); font-weight: 600; }
         .toc-h3 { padding-left: 24px; }
 
-        /* Components */
-        .admonition { padding: 16px; border-left: 5px solid; border-radius: 0 4px 4px 0; margin-bottom: 16px; font-size: 0.95em; }
-        .admonition-title { font-weight: bold; margin-bottom: 8px; display: block; text-transform: uppercase; font-size: 0.8em; }
-        .admonition.note { background: var(--note-bg); border-color: var(--note-border); }
-        .admonition.tip { background: var(--tip-bg); border-color: var(--tip-border); }
-        .admonition.info { background: var(--info-bg); border-color: var(--info-border); }
-        .admonition.warning { background: var(--warn-bg); border-color: var(--warn-border); }
-        .admonition.danger { background: var(--danger-bg); border-color: var(--danger-border); }
-        
-        .tabs-container { margin-bottom: 16px; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
-        .tabs-nav { display: flex; background: var(--bg-sidebar); border-bottom: 1px solid var(--border); margin: 0; padding: 0; list-style: none; }
-        .tab-btn { padding: 10px 16px; cursor: pointer; border: none; background: transparent; color: var(--text-main); font-weight: 600; border-bottom: 2px solid transparent; }
-        .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); background: var(--bg-main); }
-        .tab-panel { display: none; padding: 16px; background: var(--bg-main); }
-        .tab-panel.active { display: block; }
-        
-        details { border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; margin-bottom: 16px; background: var(--bg-main); }
-        summary { cursor: pointer; font-weight: bold; outline: none; padding: 4px 0; }
-        details[open] { border-color: var(--primary); }
+        /* Markdown Styles */
+        #preview h1 { font-size: 3rem; font-weight: 800; border: none; margin-bottom: 24px; }
+        #preview h2, #preview h3 { margin-top: 32px; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+        #preview code { background: rgba(135,131,120,0.1); padding: 0.2em 0.4em; border-radius: 4px; font-family: monospace; font-size: 90%; }
+        #preview pre { background: var(--code-bg); padding: 16px; border-radius: 8px; overflow: auto; margin-bottom: 20px; }
+        #preview blockquote { border-left: 4px solid var(--primary); padding: 10px 20px; margin: 0 0 20px; background: var(--primary-light); border-radius: 0 8px 8px 0; }
+        #preview img { max-width: 100%; border-radius: 8px; }
 
-        #preview h1, #preview h2, #preview h3 { margin-top: 24px; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 0.3em; color: var(--text-main); }
-        #preview code { background: rgba(135,131,120,0.15); padding: 0.2em 0.4em; border-radius: 4px; font-family: monospace; font-size: 90%; }
-        #preview pre { background: var(--code-bg); padding: 16px; border-radius: 8px; overflow: auto; margin-bottom: 16px; }
-        #preview blockquote { border-left: 4px solid var(--primary); padding-left: 16px; margin: 0 0 16px; background: var(--primary-light); }
-        #preview img { max-width: 100%; border-radius: 6px; }
-
-        /* [NEW] Simple Docusaurus JSON Style (Corrected) */
-        .category-page-header { padding: 20px 0 40px 0; border-bottom: 1px solid var(--border); margin-bottom: 30px; }
-        .cat-title { font-size: 3rem !important; font-weight: 800 !important; color: var(--text-main); margin: 0 0 20px 0 !important; border: none !important; padding: 0 !important; }
-        .cat-desc { font-size: 1.25rem; color: var(--text-sub); line-height: 1.6; margin: 0; }
-        .cat-metadata-tag { 
-            display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; 
-            background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 6px;
-            font-size: 0.8rem; color: var(--text-sub); margin-top: 20px;
+        /* [NEW] Docusaurus Generated Index Style */
+        .category-header { border-bottom: 1px solid var(--border); padding-bottom: 40px; margin-bottom: 40px; }
+        .category-title { font-size: 3rem; font-weight: 800; color: var(--text-main); margin-bottom: 16px; }
+        .category-description { font-size: 1.25rem; color: var(--text-sub); line-height: 1.6; }
+        
+        .index-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-top: 20px; }
+        .index-card { 
+            display: flex; flex-direction: column; padding: 20px; border: 1px solid var(--border); border-radius: 8px; 
+            text-decoration: none; color: inherit; transition: border-color 0.2s, box-shadow 0.2s; background: var(--bg-main);
         }
-        .cat-metadata-tag strong { color: var(--primary); }
-        
-        .json-error { padding: 20px; background: var(--danger-bg); border: 1px solid var(--danger-border); color: #d32f2f; border-radius: 8px; margin-bottom: 20px; }
-        .json-source-view { margin-top: 50px; border-top: 1px dashed var(--border); padding-top: 20px; opacity: 0.6; }
-        .json-source-view summary { font-size: 0.85em; color: var(--text-sub); cursor: pointer; }
+        .index-card:hover { border-color: var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .index-card-title { font-weight: 700; font-size: 1.1rem; color: var(--primary); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+        .index-card-desc { font-size: 0.9rem; color: var(--text-sub); line-height: 1.5; }
 
-        /* Modals & Utils */
+        .json-meta-tag { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; background: var(--bg-sidebar); border-radius: 4px; font-size: 0.75rem; color: var(--text-sub); margin-top: 20px; border: 1px solid var(--border); }
+
+        /* Modals & Context Menu */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--overlay); display: none; justify-content: center; align-items: center; z-index: 1000; }
         .modal { background: var(--bg-modal); padding: 24px; border-radius: 8px; width: 400px; border: 1px solid var(--border); box-shadow: 0 10px 25px rgba(0,0,0,0.3); color: var(--text-main); }
         .modal h3 { margin-top: 0; margin-bottom: 16px; }
@@ -163,7 +148,6 @@
         .spinner { position: absolute; top: 50%; left: 50%; width: 30px; height: 30px; border: 3px solid rgba(0,0,0,0.1); border-top: 3px solid var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; z-index: 10; transform: translate(-50%, -50%); }
         @keyframes spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
         
-        /* Context Menu */
         .context-menu { position: absolute; background: var(--bg-modal); border: 1px solid var(--border); box-shadow: 0 2px 10px rgba(0,0,0,0.2); border-radius: 4px; z-index: 2000; display: none; width: 140px; }
         .ctx-item { padding: 8px 12px; cursor: pointer; font-size: 13px; color: var(--text-main); }
         .ctx-item:hover { background: var(--primary-light); color: var(--primary); }
@@ -205,7 +189,7 @@
             </div>
         </aside>
 
-        <!-- Editor -->
+        <!-- Editor Area -->
         <main class="editor-area" id="editorArea">
             <div class="toolbar" id="toolbar">
                 <button data-cmd="bold"><b>B</b></button>
@@ -236,7 +220,7 @@
 
         <div class="resizer" id="resizer"></div>
 
-        <!-- Preview -->
+        <!-- Preview Area -->
         <section class="preview-area" id="previewArea">
             <div id="spinner" class="spinner hidden"></div>
             <div id="docHeader" class="doc-header"></div>
@@ -263,7 +247,7 @@
                 <button class="btn primary" id="createItemBtn">확인</button>
             </div>
         </div>
-        <!-- Table Modal (Reuse) -->
+        <!-- Table Modal -->
         <div id="tableModal" class="modal hidden">
             <h3>표 생성하기</h3>
             <div class="modal-body">
@@ -288,6 +272,7 @@
         </div>
     </div>
 
+    <!-- Context Menu -->
     <div id="ctxMenu" class="context-menu">
         <div class="ctx-item" id="ctxRename">✏️ 이름 변경</div>
         <div class="ctx-item delete" id="ctxDelete">🗑️ 삭제</div>
@@ -346,7 +331,6 @@
                     ui.newFolderBtn.addEventListener('click', () => App.FS.openCreateModal('folder'));
                     ui.createItemBtn.addEventListener('click', App.FS.createItem);
 
-                    // --- Debounced Logic ---
                     const debouncedRender = App.Utils.debounce((val) => {
                         App.Preview.render(val);
                         App.Editor.updateStats(val);
@@ -361,7 +345,7 @@
                     ui.editor.addEventListener('input', (e) => {
                         App.state.isDirty = true;
                         App.Utils.updateSaveBtnState();
-                        if (App.state.autoSave) App.Utils.showStatus('입력 중... (대기 저장)');
+                        if (App.state.autoSave) App.Utils.showStatus('입력 중... (자동 저장 대기)');
                         debouncedRender(e.target.value);
                         debouncedSave();
                     });
@@ -387,21 +371,17 @@
                     ui.ctxDelete.addEventListener('click', App.FS.deleteItem);
                     ui.ctxRename.addEventListener('click', App.FS.openRenameModal);
 
-                    // --- Event Delegation for File Tree ---
+                    // Tree Events Delegation
                     ui.fileTree.addEventListener('click', (e) => {
                         const item = e.target.closest('.tree-item');
                         if (!item) return;
                         e.stopPropagation();
-                        
                         if (item.dataset.kind === 'directory') {
-                            const entry = item._handle;
-                            App.state.activeFolderHandle = entry;
-                            App.FS.tryLoadIndexFile(entry);
+                            App.state.activeFolderHandle = item._handle;
+                            App.FS.tryLoadIndexFile(item._handle);
                         } else {
                             App.FS.loadFile(item._handle);
                         }
-                        
-                        // Active State
                         ui.fileTree.querySelectorAll('.tree-item').forEach(el => el.classList.remove('active'));
                         item.classList.add('active');
                     });
@@ -416,30 +396,19 @@
                         ui.ctxMenu.style.top = `${e.pageY}px`;
                     });
 
-                    // --- Drag & Drop Delegation ---
+                    // Drag & Drop Delegation
                     ui.fileTree.addEventListener('dragstart', (e) => {
                         const item = e.target.closest('.tree-item');
                         if (!item) return;
-                        e.stopPropagation();
                         App.state.dragSource = { handle: item._handle, parent: item._parent };
                         e.dataTransfer.effectAllowed = 'move';
-                        item.style.opacity = '0.5';
-                    });
-
-                    ui.fileTree.addEventListener('dragend', (e) => {
-                        const item = e.target.closest('.tree-item');
-                        if(item) item.style.opacity = '1';
                     });
 
                     ui.fileTree.addEventListener('dragover', (e) => {
                         e.preventDefault(); e.stopPropagation();
                         const item = e.target.closest('.tree-item');
-                        
-                        if (item && item.dataset.kind === 'directory') {
-                            item.classList.add('drag-over');
-                        } else if (App.state.rootHandle) {
-                            ui.fileTree.classList.add('drag-over');
-                        }
+                        if (item && item.dataset.kind === 'directory') item.classList.add('drag-over');
+                        else if (App.state.rootHandle) ui.fileTree.classList.add('drag-over');
                     });
 
                     ui.fileTree.addEventListener('dragleave', (e) => {
@@ -452,17 +421,9 @@
                         e.preventDefault(); e.stopPropagation();
                         ui.fileTree.classList.remove('drag-over');
                         document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
-
                         const targetItem = e.target.closest('.tree-item');
-                        let destDir = App.state.rootHandle;
-
-                        if (targetItem && targetItem.dataset.kind === 'directory') {
-                            destDir = targetItem._handle;
-                        }
-
-                        if (App.state.dragSource && destDir) {
-                            await App.FS.transferEntry(App.state.dragSource, destDir);
-                        }
+                        let destDir = (targetItem && targetItem.dataset.kind === 'directory') ? targetItem._handle : App.state.rootHandle;
+                        if (App.state.dragSource && destDir) await App.FS.transferEntry(App.state.dragSource, destDir);
                     });
                 }
             },
@@ -492,12 +453,9 @@
                         div.className = 'tree-item';
                         div.style.paddingLeft = `${level * 15 + 10}px`;
                         div.innerHTML = `<span>${entry.kind==='directory'?'📂':(entry.name.endsWith('.json')?'⚙️':'📄')}</span> ${entry.name}`;
-                        
                         div.dataset.kind = entry.kind;
-                        div._handle = entry;
-                        div._parent = dirHandle;
+                        div._handle = entry; div._parent = dirHandle;
                         div.setAttribute('draggable', 'true');
-
                         ul.appendChild(div);
                         if (entry.kind === 'directory') {
                             const children = await App.FS.buildTree(entry, dirHandle, level + 1);
@@ -529,6 +487,12 @@
                         }
                     }
                     if(target) await this.loadFile(target);
+                    else {
+                        // 폴더에 인덱스 파일이 없는 경우, 빈 상태로 렌더링 (그리드 시뮬레이션을 위해 필요할 수 있음)
+                        App.ui.editor.value = "";
+                        App.state.currentHandle = null;
+                        App.Preview.render("");
+                    }
                 },
                 async saveFileToDisk(silent = false) {
                     if (!App.state.currentHandle) return !silent && alert('저장할 파일이 없습니다.');
@@ -540,7 +504,7 @@
                         App.state.isDirty = false;
                         App.Utils.updateSaveBtnState();
                         App.Utils.showStatus('저장됨');
-                    } catch (err) { App.Utils.showStatus('저장 실패 (권한?)'); if(!silent) alert(err.message); }
+                    } catch (err) { App.Utils.showStatus('저장 실패'); if(!silent) alert(err.message); }
                 },
                 downloadAsFile() {
                     const content = App.ui.editor.value;
@@ -560,17 +524,7 @@
                     App.ui.newItemModal.classList.remove('hidden');
                     App.ui.renameModal.classList.add('hidden');
                     App.ui.tableModal.classList.add('hidden');
-                    App.ui.newItemName.value = '';
-                    App.ui.newItemName.focus();
-                },
-                openRenameModal() {
-                    if(!App.state.contextTarget) return;
-                    App.ui.renameInput.value = App.state.contextTarget.handle.name;
-                    App.ui.modalOverlay.style.display = 'flex';
-                    App.ui.renameModal.classList.remove('hidden');
-                    App.ui.newItemModal.classList.add('hidden');
-                    App.ui.tableModal.classList.add('hidden');
-                    App.ui.renameInput.focus();
+                    App.ui.newItemName.value = ''; App.ui.newItemName.focus();
                 },
                 async createItem() {
                     const name = App.ui.newItemName.value.trim();
@@ -592,11 +546,19 @@
                         App.FS.refreshTree();
                     } catch(e) { alert('삭제 실패: ' + e.message); }
                 },
+                openRenameModal() {
+                    if(!App.state.contextTarget) return;
+                    App.ui.renameInput.value = App.state.contextTarget.handle.name;
+                    App.ui.modalOverlay.style.display = 'flex';
+                    App.ui.renameModal.classList.remove('hidden');
+                    App.ui.newItemModal.classList.add('hidden');
+                    App.ui.tableModal.classList.add('hidden');
+                    App.ui.renameInput.focus();
+                },
                 async renameItem() {
                     const newName = App.ui.renameInput.value.trim();
                     const target = App.state.contextTarget;
-                    if(!newName || !target) return;
-                    if(newName === target.handle.name) return App.Utils.closeModals();
+                    if(!newName || !target || newName === target.handle.name) return App.Utils.closeModals();
                     try {
                         await App.FS.transferEntry({ handle: target.handle, parent: target.parent }, target.parent, newName);
                         App.Utils.closeModals();
@@ -605,18 +567,17 @@
                 async transferEntry(src, destDirHandle, newName = null) {
                     const { handle: s, parent: sp } = src;
                     const name = newName || s.name;
-                    if(!newName) {
-                        if(s === destDirHandle || sp === destDirHandle) return;
-                        if(!confirm(`'${s.name}' 이동하시겠습니까?`)) return;
-                    }
+                    if(!newName && (s === destDirHandle || sp === destDirHandle)) return;
+                    if(!newName && !confirm(`'${s.name}' 이동하시겠습니까?`)) return;
+
                     App.Utils.toggleLoading(true);
                     try {
                         const copy = async (srcH, dstH, targetName) => {
                             if(srcH.kind === 'file') {
                                 const f = await srcH.getFile();
                                 const nf = await dstH.getFileHandle(targetName, { create: true });
-                                const writable = await nf.createWritable();
-                                await writable.write(f); await writable.close();
+                                const w = await nf.createWritable();
+                                await w.write(f); await w.close();
                             } else {
                                 const nd = await dstH.getDirectoryHandle(targetName, { create: true });
                                 for await (const entry of srcH.values()) await copy(entry, nd, entry.name);
@@ -625,9 +586,8 @@
                         await copy(s, destDirHandle, name);
                         await sp.removeEntry(s.name, { recursive: true });
                         await App.FS.refreshTree();
-                        App.state.dragSource = null;
-                        App.state.contextTarget = null;
-                    } catch(e) { alert('작업 실패: ' + e.message); console.error(e); } finally { App.Utils.toggleLoading(false); }
+                        App.state.dragSource = null; App.state.contextTarget = null;
+                    } catch(e) { alert('작업 실패: ' + e.message); } finally { App.Utils.toggleLoading(false); }
                 }
             },
 
@@ -635,15 +595,12 @@
                 handleToolbar(e) {
                     const btn = e.target.closest('button'); if(!btn || !btn.dataset.cmd) return;
                     const cmd = btn.dataset.cmd;
-                    if(cmd === 'table') return (App.ui.modalOverlay.style.display='flex', App.ui.tableModal.classList.remove('hidden'), App.ui.newItemModal.classList.add('hidden'));
-                    
+                    if(cmd === 'table') return (App.ui.modalOverlay.style.display='flex', App.ui.tableModal.classList.remove('hidden'), App.ui.newItemModal.classList.add('hidden'), App.ui.renameModal.classList.add('hidden'));
                     const t = { bold:['**','**'], italic:['*','*'], strike:['~~','~~'], h2:['## ',''], h3:['### ',''], code:['```\n','\n```'], link:['[','](url)'], admonition:[':::tip\n','\n:::'], tabs:['<Tabs>\n  <TabItem value="1" label="Tab 1">Content</TabItem>\n</Tabs>',''], details:['<details>\n<summary>Title</summary>\nContent\n</details>',''], frontmatter:['---\ntitle: Doc\n---\n\n',''] }[cmd];
-                    
                     if(t) {
                         const ed = App.ui.editor;
                         ed.setRangeText(t[0] + ed.value.substring(ed.selectionStart, ed.selectionEnd) + t[1], ed.selectionStart, ed.selectionEnd, 'select');
-                        ed.focus();
-                        App.Preview.render(ed.value);
+                        ed.focus(); App.Preview.render(ed.value);
                     }
                 },
                 insertTable() {
@@ -652,8 +609,7 @@
                     for(let i=0; i<r; i++) txt += '| ' + Array(c).fill('Cell').join(' | ') + ' |\n';
                     const ed = App.ui.editor;
                     ed.setRangeText(txt, ed.selectionStart, ed.selectionEnd, 'end');
-                    App.Utils.closeModals();
-                    App.Preview.render(ed.value);
+                    App.Utils.closeModals(); App.Preview.render(ed.value);
                 },
                 handleTab(e) {
                     if(e.key === 'Tab') {
@@ -671,7 +627,7 @@
             },
 
             Preview: {
-                render(text) {
+                async render(text) {
                     const isJson = App.state.currentHandle && App.state.currentHandle.name.endsWith('.json');
                     
                     if (isJson) {
@@ -679,37 +635,44 @@
                         App.ui.tocList.innerHTML = '';
                         try {
                             const data = JSON.parse(text);
-                            // Corrected Simple Docusaurus Style Preview
-                            if (data.label || data.position || data.link || data.collapsible !== undefined || data.className) {
-                                let html = `<div class="category-page-preview">`;
-                                
-                                // 1. Title (H1)
-                                html += `<h1 class="cat-title">${App.Utils.escapeHtml(data.label || 'Untitled Category')}</h1>`;
-                                
-                                // 2. Lead Description (Large text)
+                            // Docusaurus Generated Index Style Simulation
+                            if (data.label || data.position || data.link) {
+                                let html = `<div class="category-page-header">
+                                    <h1 class="cat-title">${App.Utils.escapeHtml(data.label || '카테고리')}</h1>`;
                                 if (data.link && data.link.description) {
                                     html += `<p class="cat-desc">${App.Utils.escapeHtml(data.link.description)}</p>`;
                                 }
-
-                                // 3. Divider
-                                html += `<hr style="border:none; border-top:1px solid var(--border); margin: 30px 0;">`;
-
-                                // 4. Subtle Meta Information
-                                html += `<div style="display:flex; gap:15px; flex-wrap:wrap; opacity:0.7;">`;
-                                if (data.position) html += `<span class="cat-metadata-tag"><strong>Position:</strong> ${data.position}</span>`;
-                                if (data.collapsible !== undefined) html += `<span class="cat-metadata-tag"><strong>Collapsible:</strong> ${data.collapsible}</span>`;
-                                if (data.link && data.link.type) html += `<span class="cat-metadata-tag"><strong>Type:</strong> ${data.link.type}</span>`;
-                                html += `</div></div>`;
+                                html += `</div>`;
                                 
-                                // 5. Hidden Source Code (Toggle-able)
-                                html += `<div class="json-source-view"><details><summary>View Raw JSON Source</summary><pre><code class="language-json">${App.Utils.escapeHtml(text)}</code></pre></details></div>`;
+                                // [NEW] Scan Folder and show sibling cards
+                                const siblings = [];
+                                if (App.state.activeFolderHandle) {
+                                    for await (const entry of App.state.activeFolderHandle.values()) {
+                                        if (entry.name !== App.state.currentHandle.name) {
+                                            siblings.push(entry);
+                                        }
+                                    }
+                                }
                                 
+                                if (siblings.length > 0) {
+                                    html += `<div class="index-grid">`;
+                                    for (const entry of siblings) {
+                                        const icon = entry.kind === 'directory' ? '📂' : '📄';
+                                        html += `<div class="index-card">
+                                            <div class="index-card-title"><span>${icon}</span> ${App.Utils.escapeHtml(entry.name)}</div>
+                                            <div class="index-card-desc">해당 문서를 보려면 사이드바에서 클릭하세요.</div>
+                                        </div>`;
+                                    }
+                                    html += `</div>`;
+                                }
+
+                                html += `<div class="json-source-view"><details><summary>JSON Source Code</summary><pre><code class="language-json">${App.Utils.escapeHtml(text)}</code></pre></details></div>`;
                                 App.ui.preview.innerHTML = html;
                             } else {
                                 App.ui.preview.innerHTML = `<pre><code class="language-json">${App.Utils.escapeHtml(text)}</code></pre>`;
                             }
                         } catch (e) {
-                            App.ui.preview.innerHTML = `<div class="json-error"><strong>JSON Parsing Error:</strong><br>${e.message}</div><pre><code class="language-json">${App.Utils.escapeHtml(text)}</code></pre>`;
+                            App.ui.preview.innerHTML = `<div class="json-error"><strong>JSON Syntax Error:</strong><br>${e.message}</div><pre><code class="language-json">${App.Utils.escapeHtml(text)}</code></pre>`;
                         }
                     } else {
                         const { title, body } = App.Utils.parseFM(text);
@@ -734,11 +697,9 @@
                         const li = document.createElement('li');
                         const a = document.createElement('a');
                         a.className = `toc-link toc-${el.tagName.toLowerCase()}`;
-                        a.innerText = el.innerText;
-                        a.href = `#${el.id}`;
+                        a.innerText = el.innerText; a.href = `#${el.id}`;
                         a.onclick = (e) => { e.preventDefault(); el.scrollIntoView({behavior:'smooth'}); };
-                        li.appendChild(a);
-                        App.ui.tocList.appendChild(li);
+                        li.appendChild(a); App.ui.tocList.appendChild(li);
                     });
                 },
                 highlight() {
@@ -752,8 +713,7 @@
             Utils: {
                 toggleTheme() {
                     const t = App.state.theme === 'dark' ? 'light' : 'dark';
-                    App.state.theme = t; localStorage.setItem('theme', t);
-                    App.Utils.applyTheme(t);
+                    App.state.theme = t; localStorage.setItem('theme', t); App.Utils.applyTheme(t);
                 },
                 applyTheme(t) {
                     document.body.classList.toggle('dark-mode', t === 'dark');
