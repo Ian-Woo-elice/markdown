@@ -81,14 +81,44 @@
         .tree-item.active { background: var(--primary-light); color: var(--primary); border-left: 3px solid var(--primary); padding-left: 9px; }
         .tree-item.drag-over { background: var(--primary-light); border: 2px dashed var(--primary); }
 
+        /* [NEW] Sidebar Empty State */
+        .empty-state-container {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 100%; padding: 20px; text-align: center; color: var(--text-sub);
+        }
+        .empty-state-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.8; }
+        .empty-state-title { font-size: 16px; font-weight: 600; margin-bottom: 8px; color: var(--text-main); }
+        .empty-state-desc { font-size: 12px; line-height: 1.5; margin-bottom: 20px; }
+        .empty-state-btn {
+            background: var(--primary); color: #fff; border: none; padding: 8px 16px;
+            border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600;
+            transition: 0.2s;
+        }
+        .empty-state-btn:hover { background: var(--primary-hover); }
+
         /* Toolbar & Editor */
-        .toolbar { padding: 6px 8px; border-bottom: 1px solid var(--border); background: var(--bg-toolbar); display: flex; gap: 4px; flex-wrap: wrap; user-select: none; }
+        .toolbar { padding: 6px 8px; border-bottom: 1px solid var(--border); background: var(--bg-toolbar); display: flex; gap: 4px; flex-wrap: wrap; user-select: none; position: relative; }
         .toolbar button { background: transparent; border: 1px solid transparent; color: var(--text-main); padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 13px; }
         .toolbar button:hover { background: rgba(127,127,127,0.1); }
         .editor-wrapper { flex: 1; position: relative; display: flex; flex-direction: column; }
         #editor { flex: 1; width: 100%; padding: 20px; border: none; resize: none; outline: none; background: transparent; color: var(--text-main); font-family: 'SFMono-Regular', Consolas, monospace; font-size: 14px; line-height: 1.6; white-space: pre-wrap; overflow-wrap: break-word; }
         .status-bar { height: 26px; background: var(--bg-status); border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: flex-end; padding: 0 16px; font-size: 11px; color: var(--text-sub); gap: 16px; }
         .status-msg { margin-right: auto; font-weight: 600; color: var(--text-main); }
+
+        /* [NEW] Dropdown Menu */
+        .dropdown { position: relative; display: inline-block; }
+        .dropdown-menu {
+            display: none; position: absolute; top: 100%; left: 0; min-width: 160px;
+            background: var(--bg-modal); border: 1px solid var(--border); border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 100; margin-top: 4px;
+        }
+        .dropdown-menu.show { display: block; }
+        .dropdown-item {
+            padding: 8px 12px; font-size: 13px; color: var(--text-main); cursor: pointer;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .dropdown-item:hover { background: var(--primary-light); color: var(--primary); }
+        .dropdown-divider { height: 1px; background: var(--border); margin: 4px 0; }
 
         /* Preview Details */
         .doc-header { padding: 30px 40px 10px; font-size: 2em; font-weight: 800; color: var(--text-main); }
@@ -179,7 +209,15 @@
                 </div>
             </div>
             <div id="fileTree" class="tree-content">
-                <div class="empty-msg">프로젝트 폴더를<br>열어주세요.</div>
+                <!-- [NEW] Improved Empty State -->
+                <div class="empty-state-container">
+                    <div class="empty-state-icon">📂</div>
+                    <div class="empty-state-title">No Project Open</div>
+                    <div class="empty-state-desc">
+                        폴더를 열어 Docusaurus 문서<br>작성을 시작하세요.
+                    </div>
+                    <button id="sidebarOpenBtn" class="empty-state-btn">폴더 열기</button>
+                </div>
             </div>
         </aside>
 
@@ -197,7 +235,20 @@
                 <button data-cmd="code">Code</button>
                 <button data-cmd="admonition" title="Tip">💡</button>
                 <button data-cmd="table" title="Table">📅</button>
-                <button data-cmd="frontmatter">YAML</button>
+                
+                <!-- [NEW] YAML Dropdown -->
+                <div class="dropdown">
+                    <button id="yamlBtn" title="YAML Templates" style="font-size:11px; width:auto;">YAML ▼</button>
+                    <div class="dropdown-menu" id="yamlDropdown">
+                        <div class="dropdown-item" data-template="generic">📝 기본 (Generic)</div>
+                        <div class="dropdown-divider"></div>
+                        <div class="dropdown-item" data-template="doc">📘 문서 (Docs)</div>
+                        <div class="dropdown-item" data-template="blog">📰 블로그 (Blog)</div>
+                        <div class="dropdown-item" data-template="category">📂 카테고리 (JSON)</div>
+                    </div>
+                </div>
+
+                <button data-cmd="link">🔗</button>
             </div>
             <div class="editor-wrapper">
                 <textarea id="editor" placeholder="파일을 선택하세요." spellcheck="false"></textarea>
@@ -278,7 +329,8 @@
                     'statusMsg', 'autoSaveToggle', 'modalOverlay', 'newItemModal', 'newItemName', 
                     'createItemBtn', 'closeNewItemModal', 'modalTitle', 'ctxMenu', 'ctxDelete', 
                     'ctxRename', 'ctxDuplicate', 'renameModal', 'renameInput', 'renameBtn', 
-                    'closeRenameModal', 'searchInput', 'newFileBtn', 'newFolderBtn', 'refreshBtn'
+                    'closeRenameModal', 'searchInput', 'newFileBtn', 'newFolderBtn', 'refreshBtn',
+                    'sidebarOpenBtn', 'yamlBtn', 'yamlDropdown'
                 ];
                 ids.forEach(id => this.ui[id] = document.getElementById(id));
                 // Resizers
@@ -300,6 +352,7 @@
                 bindEvents() {
                     const ui = App.ui;
                     ui.openFolderBtn.addEventListener('click', App.FS.openDirectory);
+                    ui.sidebarOpenBtn.addEventListener('click', App.FS.openDirectory); // Sidebar Button
                     ui.saveBtn.addEventListener('click', () => App.FS.saveFileToDisk());
                     ui.downloadBtn.addEventListener('click', App.FS.downloadAsFile);
                     ui.refreshBtn.addEventListener('click', () => App.FS.refreshTree());
@@ -340,6 +393,25 @@
                     ui.preview.addEventListener('scroll', () => { App.Utils.syncScroll('preview'); App.TOC.highlight(); });
 
                     ui.toolbar.addEventListener('click', App.Editor.handleToolbar);
+                    
+                    // [NEW] YAML Dropdown Logic
+                    ui.yamlBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        ui.yamlDropdown.classList.toggle('show');
+                    });
+                    ui.yamlDropdown.addEventListener('click', (e) => {
+                        const item = e.target.closest('.dropdown-item');
+                        if(item) {
+                            const type = item.dataset.template;
+                            App.Editor.insertTemplate(type);
+                            ui.yamlDropdown.classList.remove('show');
+                        }
+                    });
+                    document.addEventListener('click', () => {
+                        ui.yamlDropdown.classList.remove('show');
+                        ui.ctxMenu.style.display = 'none';
+                    });
+
                     ui.themeToggle.addEventListener('click', App.Utils.toggleTheme);
                     ui.closeNewItemModal.addEventListener('click', App.Utils.closeModals);
                     ui.closeRenameModal.addEventListener('click', App.Utils.closeModals);
@@ -349,8 +421,6 @@
                     ui.ctxRename.addEventListener('click', App.FS.openRenameModal);
                     ui.ctxDuplicate.addEventListener('click', App.FS.duplicateItem);
 
-                    document.addEventListener('click', () => ui.ctxMenu.style.display = 'none');
-                    
                     // Event Delegation for Tree
                     ui.fileTree.addEventListener('click', (e) => {
                         const item = e.target.closest('.tree-item');
@@ -403,7 +473,7 @@
                         if (App.state.dragSource && destDir) await App.FS.transferEntry(App.state.dragSource, destDir, null, true);
                     });
                     
-                    // [NEW] Preview Index Card Click Delegation
+                    // Preview Index Card Click Delegation
                     ui.preview.addEventListener('click', async (e) => {
                         const card = e.target.closest('.index-card');
                         if (card && card.dataset.name) {
@@ -413,7 +483,6 @@
                                 try {
                                     const fileHandle = await folder.getFileHandle(fileName);
                                     App.FS.loadFile(fileHandle);
-                                    // Sync Sidebar Active State
                                     const items = ui.fileTree.querySelectorAll('.tree-item');
                                     items.forEach(it => {
                                         if (it._handle && it._handle.name === fileName) {
@@ -522,29 +591,32 @@
                     }
                 },
                 async saveFileToDisk(silent = false) {
-                    if (!App.state.currentHandle) return;
+                    if (!App.state.currentHandle) return !silent && alert('저장할 파일이 없습니다.');
                     try {
+                        if(!silent || App.state.autoSave) App.Utils.showStatus('저장 중...');
                         const writable = await App.state.currentHandle.createWritable();
                         await writable.write(App.ui.editor.value);
                         await writable.close();
                         App.state.isDirty = false;
                         App.Utils.updateSaveBtnState();
                         App.Utils.showStatus('저장됨');
-                    } catch (err) { App.Utils.showStatus('저장 실패'); }
+                    } catch (err) { App.Utils.showStatus('저장 실패 (권한?)'); if(!silent) alert(err.message); }
                 },
                 downloadAsFile() {
                     const blob = new Blob([App.ui.editor.value], { type: 'text/plain;charset=utf-8' });
                     const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
                     a.download = App.state.currentHandle ? App.state.currentHandle.name : 'doc.md';
                     a.click();
+                    URL.revokeObjectURL(a.href);
                 },
                 openCreateModal(type) {
-                    if(!App.state.rootHandle) return alert('폴더를 열어주세요.');
+                    if(!App.state.rootHandle) return alert('프로젝트 폴더를 먼저 열어주세요.');
                     App.state.createType = type;
                     App.ui.modalTitle.innerText = type === 'file' ? '새 파일 생성' : '새 폴더 생성';
                     App.ui.modalOverlay.style.display = 'flex';
                     App.ui.newItemModal.classList.remove('hidden');
                     App.ui.renameModal.classList.add('hidden');
+                    App.ui.tableModal.classList.add('hidden');
                     App.ui.newItemName.value = ''; App.ui.newItemName.focus();
                 },
                 async createItem() {
@@ -560,7 +632,11 @@
                 async deleteItem() {
                     const t = App.state.contextTarget;
                     if(!t || !confirm(`'${t.handle.name}' 삭제하시겠습니까?`)) return;
-                    try { await t.parent.removeEntry(t.handle.name, { recursive: true }); await App.FS.refreshTree(); } catch(e) { alert('삭제 실패'); }
+                    try {
+                        await t.parent.removeEntry(t.handle.name, { recursive: true });
+                        if(App.state.currentHandle === t.handle) { App.ui.editor.value = ''; App.state.currentHandle = null; }
+                        App.FS.refreshTree();
+                    } catch(e) { alert('삭제 실패: ' + e.message); }
                 },
                 openRenameModal() {
                     if(!App.state.contextTarget) return;
@@ -568,6 +644,7 @@
                     App.ui.modalOverlay.style.display = 'flex';
                     App.ui.renameModal.classList.remove('hidden');
                     App.ui.newItemModal.classList.add('hidden');
+                    App.ui.tableModal.classList.add('hidden');
                     App.ui.renameInput.focus();
                 },
                 async renameItem() {
@@ -612,8 +689,9 @@
                     const btn = e.target.closest('button'); if(!btn || !btn.dataset.cmd) return;
                     const cmd = btn.dataset.cmd;
                     if(cmd === 'table') return (App.ui.modalOverlay.style.display='flex', App.ui.tableModal.classList.remove('hidden'), App.ui.newItemModal.classList.add('hidden'), App.ui.renameModal.classList.add('hidden'));
+                    if(cmd === 'frontmatter') return; // Handled by dropdown logic
                     
-                    const t = { bold:['**','**'], italic:['*','*'], h2:['## ',''], h3:['### ',''], code:['```\n','\n```'], link:['[','](url)'], admonition:[':::tip\n','\n:::'], tabs:['<Tabs>\n  <TabItem value="1" label="Tab 1">Content</TabItem>\n</Tabs>',''], details:['<details>\n<summary>Title</summary>\nContent\n</details>',''], frontmatter:['---\ntitle: Doc\n---\n\n',''] }[cmd];
+                    const t = { bold:['**','**'], italic:['*','*'], h2:['## ',''], h3:['### ',''], code:['```\n','\n```'], link:['[','](url)'], admonition:[':::tip\n','\n:::'], details:['<details>\n<summary>Title</summary>\nContent\n</details>',''] }[cmd];
                     
                     if(t) {
                         const ed = App.ui.editor;
@@ -621,24 +699,21 @@
                         ed.focus(); App.Preview.render(ed.value);
                     }
                 },
-                insertTable() {
-                    const r = parseInt(document.getElementById('tableRows').value)||3, c = parseInt(document.getElementById('tableCols').value)||3;
-                    let txt = '\n| ' + Array(c).fill('Head').join(' | ') + ' |\n| ' + Array(c).fill('---').join(' | ') + ' |\n';
-                    for(let i=0; i<r; i++) txt += '| ' + Array(c).fill('Cell').join(' | ') + ' |\n';
+                insertTemplate(type) {
+                    const templates = {
+                        generic: '---\nid: doc-id\ntitle: Title\n---\n\n',
+                        doc: '---\nid: doc-id\ntitle: Title\nsidebar_position: 1\ndescription: Document description\n---\n\n',
+                        blog: '---\ntitle: Blog Post Title\nauthors: [name]\ntags: [tag1, tag2]\ndate: 2024-01-01\n---\n\n',
+                        category: '{\n  "label": "Category Name",\n  "position": 1,\n  "link": {\n    "type": "generated-index",\n    "description": "Category Description"\n  }\n}'
+                    };
+                    const text = templates[type] || '';
                     const ed = App.ui.editor;
-                    ed.setRangeText(txt, ed.selectionStart, ed.selectionEnd, 'end');
-                    App.Utils.closeModals(); App.Preview.render(ed.value);
-                },
-                handleTab(e) {
-                    if(e.key === 'Tab') {
-                        e.preventDefault();
-                        e.target.setRangeText('  ', e.target.selectionStart, e.target.selectionEnd, 'end');
-                        App.Preview.render(e.target.value);
-                    }
+                    ed.setRangeText(text, ed.selectionStart, ed.selectionEnd, 'select');
+                    ed.focus(); App.Preview.render(ed.value);
                 },
                 updateStats(text) {
-                    const w = text.trim().split(/\s+/).filter(x=>x).length;
-                    App.ui.wordCount.innerText = `단어: ${w}`;
+                    const words = text.trim().split(/\s+/).filter(x=>x).length;
+                    App.ui.wordCount.innerText = `단어: ${words}`;
                 }
             },
 
