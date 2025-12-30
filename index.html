@@ -73,11 +73,13 @@
         .search-box { width: 100%; padding: 6px 10px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg-main); color: var(--text-main); font-size: 12px; outline: none; }
         .sidebar-actions { display: flex; gap: 4px; }
         .sidebar-actions button { flex: 1; padding: 4px; font-size: 10px; background: var(--bg-main); border: 1px solid var(--border); color: var(--text-main); cursor: pointer; border-radius: 4px; }
+        .sidebar-actions button:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
         
         .tree-content { flex: 1; overflow-y: auto; padding: 8px 0; }
         .tree-item { padding: 4px 12px; cursor: pointer; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 6px; color: var(--text-main); line-height: 1.8; border: 1px solid transparent; }
         .tree-item:hover { background: rgba(127,127,127,0.1); }
         .tree-item.active { background: var(--primary-light); color: var(--primary); border-left: 3px solid var(--primary); padding-left: 9px; }
+        .tree-item.drag-over { background: var(--primary-light); border: 2px dashed var(--primary); }
 
         /* Toolbar & Editor */
         .toolbar { padding: 6px 8px; border-bottom: 1px solid var(--border); background: var(--bg-toolbar); display: flex; gap: 4px; flex-wrap: wrap; user-select: none; }
@@ -86,6 +88,7 @@
         .editor-wrapper { flex: 1; position: relative; display: flex; flex-direction: column; }
         #editor { flex: 1; width: 100%; padding: 20px; border: none; resize: none; outline: none; background: transparent; color: var(--text-main); font-family: 'SFMono-Regular', Consolas, monospace; font-size: 14px; line-height: 1.6; white-space: pre-wrap; overflow-wrap: break-word; }
         .status-bar { height: 26px; background: var(--bg-status); border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: flex-end; padding: 0 16px; font-size: 11px; color: var(--text-sub); gap: 16px; }
+        .status-msg { margin-right: auto; font-weight: 600; color: var(--text-main); }
 
         /* Preview Details */
         .doc-header { padding: 30px 40px 10px; font-size: 2em; font-weight: 800; color: var(--text-main); }
@@ -93,10 +96,8 @@
 
         /* Docusaurus Category Index UI */
         .category-page-header { padding-bottom: 30px; border-bottom: 1px solid var(--border); margin-bottom: 30px; }
-        .category-title { font-size: 3rem !important; font-weight: 800 !important; color: var(--text-main); border: none !important; margin: 0 0 16px 0 !important; }
-        
-        /* Fixed 1-line Description with Truncation */
-        .category-description { 
+        .cat-title { font-size: 3rem !important; font-weight: 800 !important; color: var(--text-main); border: none !important; margin: 0 0 16px 0 !important; }
+        .cat-desc { 
             font-size: 1.25rem; color: var(--text-sub); line-height: 1.6; margin: 0;
             display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;
         }
@@ -108,8 +109,6 @@
         }
         .index-card:hover { border-color: var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-2px); }
         .index-card-title { font-weight: 700; font-size: 1.2rem; color: var(--primary); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
-        
-        /* Fixed 1-line Card Description with Truncation */
         .index-card-desc { 
             font-size: 0.95rem; color: var(--text-sub); line-height: 1.5;
             display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;
@@ -163,7 +162,7 @@
 
     <div class="main-container" id="mainLayout">
         <!-- Sidebar -->
-        <aside class="pane pane-sidebar">
+        <aside class="pane pane-sidebar" id="sidebarPane">
             <div class="sidebar-header">
                 <input type="text" id="searchInput" class="search-box" placeholder="파일명 검색...">
                 <div class="sidebar-actions">
@@ -180,7 +179,7 @@
         <div class="resizer" id="resizer1"></div>
 
         <!-- Editor -->
-        <main class="pane pane-editor">
+        <main class="pane pane-editor" id="editorPane">
             <div class="toolbar" id="toolbar">
                 <button data-cmd="bold"><b>B</b></button>
                 <button data-cmd="italic"><i>I</i></button>
@@ -205,7 +204,7 @@
         <div class="resizer" id="resizer2"></div>
 
         <!-- Preview -->
-        <section class="pane pane-preview">
+        <section class="pane pane-preview" id="previewPane">
             <div id="spinner" class="spinner hidden"></div>
             <div id="docHeader" class="doc-header"></div>
             <div id="preview" class="markdown-body"></div>
@@ -214,7 +213,7 @@
         <div class="resizer" id="resizer3"></div>
 
         <!-- TOC -->
-        <aside class="pane pane-toc">
+        <aside class="pane pane-toc" id="tocPane">
             <div class="toc-header">ON THIS PAGE</div>
             <ul id="tocList" class="toc-list"></ul>
         </aside>
@@ -253,7 +252,7 @@
                 theme: localStorage.getItem('theme') || 'light',
                 isDirty: false, contextTarget: null, dragSource: null,
                 autoSave: localStorage.getItem('autoSave') === 'true',
-                columnWidths: JSON.parse(localStorage.getItem('split-pos')) || ['240px', '4px', '40%', '4px', '1fr', '4px', '220px']
+                columnWidths: JSON.parse(localStorage.getItem('split-pos')) || [240, 4, 500, 4, 500, 4, 220]
             },
             ui: {},
 
@@ -281,7 +280,11 @@
                 loadSettings() { 
                     App.Utils.applyTheme(App.state.theme);
                     App.ui.autoSaveToggle.checked = App.state.autoSave;
-                    App.ui.mainLayout.style.gridTemplateColumns = App.state.columnWidths.join(' ');
+                    App.Core.applyLayout();
+                },
+                applyLayout() {
+                    const w = App.state.columnWidths;
+                    App.ui.mainLayout.style.gridTemplateColumns = `${w[0]}px ${w[1]}px minmax(200px, ${w[2]}px) ${w[3]}px minmax(200px, ${w[4]}px) ${w[5]}px ${w[6]}px`;
                 },
                 bindEvents() {
                     const ui = App.ui;
@@ -344,7 +347,11 @@
                         if (item.dataset.kind === 'directory') {
                             App.state.activeFolderHandle = item._handle;
                             App.FS.tryLoadIndexFile(item._handle);
-                        } else App.FS.loadFile(item._handle);
+                        } else {
+                            // If it's a file, its parent folder is the active folder
+                            App.state.activeFolderHandle = item._parent;
+                            App.FS.loadFile(item._handle);
+                        }
                         ui.fileTree.querySelectorAll('.tree-item').forEach(el => el.classList.remove('active'));
                         item.classList.add('active');
                     });
@@ -388,12 +395,12 @@
                 initResizers() {
                     const setup = (id, colIdx) => {
                         const resizer = document.getElementById(id);
-                        let startX, startWidth;
+                        let startX, startWidths;
                         const onMouseMove = (e) => {
                             const delta = e.clientX - startX;
-                            const newWidth = Math.max(100, startWidth + delta);
-                            App.state.columnWidths[colIdx] = `${newWidth}px`;
-                            App.ui.mainLayout.style.gridTemplateColumns = App.state.columnWidths.join(' ');
+                            const newWidth = Math.max(50, startWidths[colIdx] + delta);
+                            App.state.columnWidths[colIdx] = newWidth;
+                            App.Core.applyLayout();
                         };
                         const onMouseUp = () => {
                             resizer.classList.remove('dragging');
@@ -403,7 +410,7 @@
                         };
                         resizer.addEventListener('mousedown', (e) => {
                             startX = e.clientX;
-                            startWidth = resizer.previousElementSibling.offsetWidth;
+                            startWidths = [...App.state.columnWidths];
                             resizer.classList.add('dragging');
                             document.addEventListener('mousemove', onMouseMove);
                             document.addEventListener('mouseup', onMouseUp);
@@ -470,7 +477,11 @@
                         }
                     }
                     if(target) await this.loadFile(target);
-                    else { App.state.currentHandle = null; App.ui.editor.value = ""; App.Preview.render(""); }
+                    else {
+                        App.state.currentHandle = null;
+                        App.ui.editor.value = "";
+                        App.Preview.render("");
+                    }
                 },
                 async saveFileToDisk(silent = false) {
                     if (!App.state.currentHandle) return;
@@ -585,21 +596,25 @@
             Preview: {
                 async render(text) {
                     const isJson = App.state.currentHandle?.name.endsWith('.json');
+                    
                     if (isJson) {
                         App.ui.docHeader.innerText = App.state.currentHandle.name;
                         App.ui.tocList.innerHTML = '';
                         try {
                             const data = JSON.parse(text);
+                            // Docusaurus Index Style
                             if (data.label || data.link) {
                                 let html = `<div class="category-page-header">
                                     <h1 class="cat-title">${App.Utils.escapeHtml(data.label || 'Category')}</h1>`;
-                                if (data.link?.description) html += `<p class="category-description">${App.Utils.escapeHtml(data.link.description)}</p>`;
+                                if (data.link?.description) html += `<p class="cat-desc">${App.Utils.escapeHtml(data.link.description)}</p>`;
                                 html += `</div><div class="index-grid">`;
                                 
                                 const cards = [];
-                                if (App.state.activeFolderHandle) {
-                                    for await (const entry of App.state.activeFolderHandle.values()) {
-                                        if (entry.kind === 'file' && entry.name.endsWith('.md')) {
+                                // Use the tracked parent handle to find siblings
+                                const folderHandle = App.state.activeFolderHandle;
+                                if (folderHandle) {
+                                    for await (const entry of folderHandle.values()) {
+                                        if (entry.kind === 'file' && (entry.name.endsWith('.md') || entry.name.endsWith('.mdx'))) {
                                             const file = await entry.getFile();
                                             const content = await file.text();
                                             const meta = App.Utils.parseFM(content);
