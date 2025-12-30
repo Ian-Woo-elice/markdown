@@ -90,14 +90,17 @@
         .status-bar { height: 26px; background: var(--bg-status); border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: flex-end; padding: 0 16px; font-size: 11px; color: var(--text-sub); gap: 16px; }
         .status-msg { margin-right: auto; font-weight: 600; color: var(--text-main); }
 
-        /* Preview Area */
+        /* Preview Details */
         .doc-header { padding: 30px 40px 10px; font-size: 2em; font-weight: 800; color: var(--text-main); }
         #preview { flex: 1; padding: 10px 40px 50px; overflow-y: auto; font-size: 16px; line-height: 1.7; scroll-behavior: smooth; overflow-wrap: break-word; }
 
-        /* [NEW] Docusaurus Card Style Navigation */
+        /* Docusaurus Category Index UI */
         .category-page-header { padding-bottom: 30px; border-bottom: 1px solid var(--border); margin-bottom: 30px; }
         .cat-title { font-size: 3rem !important; font-weight: 800 !important; color: var(--text-main); border: none !important; margin: 0 0 16px 0 !important; }
-        .cat-desc { font-size: 1.25rem; color: var(--text-sub); line-height: 1.6; margin: 0; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+        .cat-desc { 
+            font-size: 1.25rem; color: var(--text-sub); line-height: 1.6; margin: 0;
+            display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;
+        }
         
         .index-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 20px; }
         .index-card { 
@@ -119,6 +122,12 @@
         .toc-link { display: block; color: var(--text-sub); text-decoration: none; padding-left: 12px; cursor: pointer; border-left: 2px solid transparent; margin-left: -1px; font-size: 12px; line-height: 1.5; margin-bottom: 4px; }
         .toc-link:hover, .toc-link.active { color: var(--primary); }
         .toc-link.active { border-left-color: var(--primary); font-weight: 600; }
+
+        /* Markdown elements */
+        #preview h2, #preview h3 { margin-top: 32px; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+        #preview code { background: rgba(135,131,120,0.1); padding: 0.2em 0.4em; border-radius: 4px; font-family: monospace; font-size: 90%; }
+        #preview pre { background: var(--code-bg); padding: 16px; border-radius: 8px; overflow: auto; margin-bottom: 20px; }
+        #preview blockquote { border-left: 4px solid var(--primary); padding: 10px 20px; background: var(--primary-light); border-radius: 0 8px 8px 0; margin-bottom: 20px; }
 
         /* Modals */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--overlay); display: none; justify-content: center; align-items: center; z-index: 1000; }
@@ -220,7 +229,7 @@
     <!-- Modals -->
     <div id="modalOverlay" class="modal-overlay">
         <div id="newItemModal" class="modal hidden">
-            <h3 id="modalTitle">새 항목 생성</h3>
+            <h3 id="modalTitle">항목 생성</h3>
             <div class="input-group"><label>이름</label><input type="text" id="newItemName" placeholder="파일명/폴더명 입력"></div>
             <div class="modal-footer">
                 <button class="btn" id="closeNewItemModal">취소</button>
@@ -267,11 +276,15 @@
                     'openFolderBtn', 'saveBtn', 'downloadBtn', 'fileTree', 'editor', 'preview', 
                     'docHeader', 'toolbar', 'themeToggle', 'spinner', 'tocList', 'mainLayout',
                     'statusMsg', 'autoSaveToggle', 'modalOverlay', 'newItemModal', 'newItemName', 
-                    'createItemBtn', 'closeNewItemModal', 'ctxMenu', 'ctxDelete', 'ctxRename', 
-                    'ctxDuplicate', 'renameModal', 'renameInput', 'renameBtn', 
+                    'createItemBtn', 'closeNewItemModal', 'modalTitle', 'ctxMenu', 'ctxDelete', 
+                    'ctxRename', 'ctxDuplicate', 'renameModal', 'renameInput', 'renameBtn', 
                     'closeRenameModal', 'searchInput'
                 ];
                 ids.forEach(id => this.ui[id] = document.getElementById(id));
+                // Resizers
+                this.ui.resizer1 = document.getElementById('resizer1');
+                this.ui.resizer2 = document.getElementById('resizer2');
+                this.ui.resizer3 = document.getElementById('resizer3');
             },
 
             Core: {
@@ -364,7 +377,33 @@
                         ui.ctxMenu.style.top = `${e.pageY}px`;
                     });
 
-                    // [NEW] Event Delegation for Preview Index Cards
+                    ui.fileTree.addEventListener('dragstart', (e) => {
+                        const item = e.target.closest('.tree-item');
+                        if (!item) return;
+                        App.state.dragSource = { handle: item._handle, parent: item._parent };
+                        e.dataTransfer.effectAllowed = 'move';
+                    });
+                    ui.fileTree.addEventListener('dragover', (e) => {
+                        e.preventDefault(); e.stopPropagation();
+                        const item = e.target.closest('.tree-item');
+                        if (item && item.dataset.kind === 'directory') item.classList.add('drag-over');
+                        else if (App.state.rootHandle) ui.fileTree.classList.add('drag-over');
+                    });
+                    ui.fileTree.addEventListener('dragleave', (e) => {
+                        const item = e.target.closest('.tree-item');
+                        if (item) item.classList.remove('drag-over');
+                        else ui.fileTree.classList.remove('drag-over');
+                    });
+                    ui.fileTree.addEventListener('drop', async (e) => {
+                        e.preventDefault(); e.stopPropagation();
+                        ui.fileTree.classList.remove('drag-over');
+                        document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+                        const targetItem = e.target.closest('.tree-item');
+                        let destDir = (targetItem && targetItem.dataset.kind === 'directory') ? targetItem._handle : App.state.rootHandle;
+                        if (App.state.dragSource && destDir) await App.FS.transferEntry(App.state.dragSource, destDir, null, true);
+                    });
+                    
+                    // [NEW] Preview Index Card Click Delegation
                     ui.preview.addEventListener('click', async (e) => {
                         const card = e.target.closest('.index-card');
                         if (card && card.dataset.name) {
@@ -374,7 +413,7 @@
                                 try {
                                     const fileHandle = await folder.getFileHandle(fileName);
                                     App.FS.loadFile(fileHandle);
-                                    // Sidebar Sync
+                                    // Sync Sidebar Active State
                                     const items = ui.fileTree.querySelectorAll('.tree-item');
                                     items.forEach(it => {
                                         if (it._handle && it._handle.name === fileName) {
@@ -383,7 +422,7 @@
                                             it.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                                         }
                                     });
-                                } catch (err) { console.error('카드 클릭 시 파일 로드 실패:', err); }
+                                } catch (err) { console.error('Card click error:', err); }
                             }
                         }
                     });
@@ -472,7 +511,7 @@
                     for await (const [name, handle] of dirHandle.entries()) {
                         if (handle.kind === 'file') {
                             if (name.toLowerCase() === 'index.md') { target = handle; break; }
-                            if (name.endsWith('.json')) target = handle;
+                            if (!target && name.endsWith('.json')) target = handle;
                         }
                     }
                     if(target) await this.loadFile(target);
@@ -580,7 +619,7 @@
                     }
                 },
                 updateStats(text) {
-                    const words = text.trim().split(/\s+/).filter(w => w.length > 0).length;
+                    const words = text.trim().split(/\s+/).filter(x=>x).length;
                     App.ui.wordCount.innerText = `단어: ${words}`;
                 }
             },
@@ -601,6 +640,7 @@
                         App.ui.tocList.innerHTML = '';
                         try {
                             const data = JSON.parse(text);
+                            // Docusaurus Index Style
                             if (data.label || data.link) {
                                 let html = `<div class="category-page-header">
                                     <h1 class="cat-title">${App.Utils.escapeHtml(data.label || 'Category')}</h1>`;
@@ -642,7 +682,7 @@
                         App.ui.docHeader.innerText = title || App.state.currentHandle?.name || "Untitled";
                         let html = marked.parse(body);
                         html = html.replace(/<p>:::(note|tip|info|warning|danger)([\s\S]*?):::<\/p>/g, (m,t,c)=>`<div class="admonition ${t}"><span class="admonition-title">${t}</span>${c}</div>`);
-                        App.ui.preview.innerHTML = DOMPurify.sanitize(html, { ADD_TAGS:['tabs','tabitem','details','summary'], ADD_ATTR:['label','value'] });
+                        App.ui.preview.innerHTML = DOMPurify.sanitize(html, { ADD_TAGS:['tabs','tabitem','details','summary'], ADD_ATTR:['label','value', 'data-name'] });
                         App.Utils.transformTabs(); App.TOC.generate();
                     }
                     App.ui.preview.querySelectorAll('pre code').forEach(hljs.highlightElement);
