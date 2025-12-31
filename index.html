@@ -326,8 +326,9 @@
     </div>
 
     <div id="ctxMenu" class="context-menu">
-        <div class="ctx-item" id="ctxNewFile">📄 새 파일</div>
-        <div class="ctx-item" id="ctxNewFolder">📂 새 폴더</div>
+        <!-- [CHANGED] Updated Text -->
+        <div class="ctx-item" id="ctxNewFile">📄 하위 파일 생성</div>
+        <div class="ctx-item" id="ctxNewFolder">📂 하위 폴더 생성</div>
         <div style="border-top:1px solid var(--border); margin:4px 0;"></div>
         <div class="ctx-item" id="ctxRename">✏️ 이름 변경</div>
         <div class="ctx-item" id="ctxDuplicate">👯 복제</div>
@@ -435,7 +436,7 @@
 
                     ui.toolbar.addEventListener('click', App.Editor.handleToolbar);
                     
-                    // [NEW] YAML Dropdown Logic
+                    // YAML Dropdown
                     ui.yamlBtn.addEventListener('click', (e) => {
                         e.stopPropagation();
                         ui.yamlDropdown.classList.toggle('show');
@@ -863,7 +864,14 @@
                                         if (entry.kind === 'file' && (entry.name.endsWith('.md') || entry.name.endsWith('.mdx'))) {
                                             const file = await entry.getFile();
                                             const content = await file.text();
+                                            
+                                            // [CHECK] Check if file has YAML
+                                            if (!content.trim().startsWith('---')) continue;
+
                                             const meta = App.Utils.parseFM(content);
+                                            // [CHECK] Check Draft status
+                                            if (meta.draft === true) continue;
+
                                             cards.push({ 
                                                 handle: entry, 
                                                 title: meta.title || entry.name, 
@@ -947,10 +955,23 @@
                 
                 toggleLoading(s) { App.ui.spinner.classList.toggle('hidden', !s); },
                 escapeHtml(s) { return s?.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); },
+                
+                // [UPDATED] Robust YAML Parsing
                 parseFM(text) {
-                    const m = text.match(/^---\n([\s\S]+?)\n---/);
-                    let meta = {}; if(m) { try { meta = jsyaml.load(m[1]) || {}; } catch(e) {} }
-                    return { ...meta, body: m ? text.replace(m[0],'') : text };
+                    // Allow whitespace before ---
+                    const m = text.match(/^\s*---\n([\s\S]+?)\n---/);
+                    let meta = {}; 
+                    let body = text;
+                    if(m) { 
+                        try { meta = jsyaml.load(m[1]) || {}; } catch(e) {} 
+                        body = text.replace(m[0], '');
+                    }
+                    // Fallback: Use first H1 for title if not in YAML
+                    if (!meta.title) {
+                        const h1Match = body.match(/^#\s+(.+)$/m);
+                        if (h1Match) meta.title = h1Match[1].trim();
+                    }
+                    return { ...meta, body };
                 },
                 extractSummary(body) {
                     const clean = body.replace(/[#*`\[\]()!]/g, '').replace(/\n/g, ' ').trim();
