@@ -117,11 +117,10 @@
         }
         .empty-state-btn:hover { background: var(--primary-hover); }
 
-        /* Editor Area */
+        /* Toolbar & Editor */
         .toolbar { padding: 6px 8px; border-bottom: 1px solid var(--border); background: var(--bg-toolbar); display: flex; gap: 4px; flex-wrap: wrap; user-select: none; position: relative; }
         .toolbar button { background: transparent; border: 1px solid transparent; color: var(--text-main); padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 13px; }
         .toolbar button:hover { background: rgba(127,127,127,0.1); }
-        
         .editor-wrapper { flex: 1; position: relative; display: flex; flex-direction: column; overflow: hidden; }
 
         /* CodeMirror Customization */
@@ -297,7 +296,7 @@
             </div>
             
             <div class="editor-wrapper">
-                <textarea id="editor" placeholder="파일을 선택하세요." spellcheck="false"></textarea>
+                <textarea id="editor" placeholder="파일을 선택하거나 내용을 입력하세요..." spellcheck="false"></textarea>
                 <div class="status-bar">
                     <div class="status-msg" id="statusMsg"></div>
                     <div class="stat-item" id="wordCount">단어: 0</div>
@@ -374,14 +373,23 @@
                 isDirty: false, contextTarget: null, dragSource: null,
                 autoSave: localStorage.getItem('autoSave') === 'true',
                 columnWidths: JSON.parse(localStorage.getItem('split-pos')) || [240, 4, 500, 4, 500, 4, 220],
-                editor: null // CodeMirror Instance
+                editor: null
             },
             ui: {},
 
             init() {
                 this.cacheDOM();
                 this.Core.loadSettings();
-                this.Editor.initCodeMirror(); // Initialize CM
+                
+                // [FIX] CodeMirror Initialization Safety Check
+                if (typeof CodeMirror !== 'undefined') {
+                    this.Editor.initCodeMirror();
+                } else {
+                    // Retry or fallback
+                    console.warn('CodeMirror loading... retrying in 500ms');
+                    setTimeout(() => { if(typeof CodeMirror !== 'undefined') this.Editor.initCodeMirror(); }, 500);
+                }
+
                 this.Core.bindEvents();
                 this.Core.initResizers();
                 marked.setOptions({ gfm: true, breaks: true });
@@ -399,7 +407,6 @@
                     'tableModal', 'tableRows', 'tableCols', 'insertTableBtn', 'closeTableModal', 'wordCount'
                 ];
                 ids.forEach(id => this.ui[id] = document.getElementById(id));
-                // Resizers
                 this.ui.resizer1 = document.getElementById('resizer1');
                 this.ui.resizer2 = document.getElementById('resizer2');
                 this.ui.resizer3 = document.getElementById('resizer3');
@@ -445,16 +452,12 @@
                         if(App.state.autoSave && App.state.currentHandle && App.state.isDirty) App.FS.saveFileToDisk(true);
                     }, 2000);
 
-                    App.state.editor.on('change', (cm) => {
-                         // This is handled in initCodeMirror but here for reference
-                         // Handled inside initCodeMirror
-                    });
+                    // Note: Input handling moved to CodeMirror event
 
                     ui.preview.addEventListener('scroll', () => { App.Utils.syncScroll('preview'); App.TOC.highlight(); });
 
                     ui.toolbar.addEventListener('click', App.Editor.handleToolbar);
                     
-                    // YAML Dropdown Logic
                     ui.yamlBtn.addEventListener('click', (e) => {
                         e.stopPropagation();
                         ui.yamlDropdown.classList.toggle('show');
@@ -490,11 +493,9 @@
 
                     document.addEventListener('click', () => ui.ctxMenu.style.display = 'none');
                     document.addEventListener('keydown', e => {
-                         // Global save shortcut handled in editor init, but here for safety
                         if((e.ctrlKey||e.metaKey) && e.key === 's') { e.preventDefault(); App.FS.saveFileToDisk(); }
                     });
                     
-                    // Event Delegation for Tree
                     ui.fileTree.addEventListener('click', (e) => {
                         const item = e.target.closest('.tree-item');
                         if (!item) return;
@@ -515,16 +516,13 @@
                         if (!item) return;
                         e.preventDefault(); e.stopPropagation();
                         App.state.contextTarget = { handle: item._handle, parent: item._parent, kind: item.dataset.kind };
-                        // Update active folder based on context
                         if (item.dataset.kind === 'directory') App.state.activeFolderHandle = item._handle;
                         else App.state.activeFolderHandle = item._parent;
-
                         ui.ctxMenu.style.display = 'block';
                         ui.ctxMenu.style.left = `${e.pageX}px`;
                         ui.ctxMenu.style.top = `${e.pageY}px`;
                     });
 
-                    // Drag & Drop Delegation
                     ui.fileTree.addEventListener('dragstart', (e) => {
                         const item = e.target.closest('.tree-item');
                         if (!item) return;
@@ -551,7 +549,6 @@
                         if (App.state.dragSource && destDir) await App.FS.transferEntry(App.state.dragSource, destDir, null, true);
                     });
                     
-                    // Preview Index Card Click Delegation
                     ui.preview.addEventListener('click', async (e) => {
                         const card = e.target.closest('.index-card');
                         if (card && card.dataset.name) {
@@ -574,12 +571,10 @@
                         }
                     });
 
-                    // Resizers
                     ui.resizer1.addEventListener('mousedown', e => App.Editor.startResize(e, 0));
                     ui.resizer2.addEventListener('mousedown', e => App.Editor.startResize(e, 2));
                     ui.resizer3.addEventListener('mousedown', e => App.Editor.startResize(e, 4));
 
-                    // Modal Inputs Enter Key
                     document.querySelectorAll('.modal input').forEach(input => {
                         input.addEventListener('keydown', e => {
                             if(e.key === 'Enter') {
@@ -687,11 +682,16 @@
                     }
                     // 2. Handle Untitled
                     if (!App.state.currentHandle || App.state.currentHandle.kind === 'virtual') {
-                        // [UPDATED] Use showSaveFilePicker for untitled files
+                        // Use showSaveFilePicker for untitled files
                         try {
                             const opts = { suggestedName: 'untitled.md', types: [{ description: 'Markdown File', accept: {'text/markdown': ['.md']} }] };
                             const handle = await window.showSaveFilePicker(opts);
                             App.state.currentHandle = handle;
+                            
+                            // [FIX] Update UI and Refresh Tree
+                            App.ui.docHeader.innerText = handle.name; 
+                            await App.FS.refreshTree(); 
+                            
                             // Proceed to save
                         } catch (err) {
                             if(err.name !== 'AbortError') alert('저장이 취소되었습니다.');
@@ -707,6 +707,8 @@
                         App.state.isDirty = false;
                         App.Utils.updateSaveBtnState();
                         App.Utils.showStatus('저장됨');
+                        // Update preview immediately
+                        App.Preview.render(App.state.editor.getValue());
                     } catch (err) { App.Utils.showStatus('저장 실패 (권한?)'); if(!silent) alert(err.message); }
                 },
                 async getUniqueName(dirHandle, baseName) {
@@ -800,7 +802,6 @@
 
             Editor: {
                 initCodeMirror() {
-                    // Remove old textarea logic
                     const textarea = document.getElementById('editor');
                     if(textarea.style.display === 'none') return; // prevent re-init if already done
                     
@@ -846,6 +847,7 @@
                     const btn = e.target.closest('button'); if(!btn || !btn.dataset.cmd) return;
                     const cmd = btn.dataset.cmd;
                     if(cmd === 'table') return App.Utils.openModal('tableModal');
+                    // Image: No Modal, direct input
                     if(cmd === 'image') return App.Editor.insertText('![Alt Text](URL)', ''); 
                     if(cmd === 'format') return App.Tools.formatDocument(); // [NEW] Format
                     if(cmd === 'frontmatter') return;
@@ -1051,6 +1053,7 @@
                         try { meta = jsyaml.load(m[1]) || {}; } catch(e) {} 
                         body = text.replace(m[0], '');
                     }
+                    // Fallback: Use first H1 for title if not in YAML
                     if (!meta.title) {
                         const h1Match = body.match(/^#\s+(.+)$/m);
                         if (h1Match) meta.title = h1Match[1].trim();
