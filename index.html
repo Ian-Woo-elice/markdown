@@ -12,14 +12,18 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+    
+    <!-- Prettier (Formatting) -->
+    <script src="https://unpkg.com/prettier@2.8.8/standalone.js"></script>
+    <script src="https://unpkg.com/prettier@2.8.8/parser-markdown.js"></script>
 
     <!-- CodeMirror 5 (Core + Modes + Addons) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/atom-one-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/markdown/markdown.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script> <!-- For HTML tags -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/gfm/gfm.min.js"></script> <!-- Github Flavored Markdown -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/gfm/gfm.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/selection/active-line.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/display/placeholder.min.js"></script>
@@ -186,10 +190,10 @@
         #preview blockquote { border-left: 4px solid var(--primary); padding: 10px 20px; background: var(--primary-light); border-radius: 0 8px 8px 0; margin-bottom: 20px; }
         #preview img { max-width: 100%; border-radius: 6px; }
 
-        /* Table Styles */
+        /* Table Styles for Preview */
         .markdown-body table { width: 100%; border-collapse: collapse; margin-bottom: 16px; display: table; }
-        .markdown-body th, .markdown-body td { border: 1px solid var(--border); padding: 8px 12px; line-height: 1.5; }
-        .markdown-body th { font-weight: 600; background-color: var(--bg-sidebar); }
+        .markdown-body th, .markdown-body td { border: 1px solid var(--border); padding: 8px 12px; line-height: 1.5; text-align: left; }
+        .markdown-body th { font-weight: 600; background-color: var(--bg-sidebar); border-bottom: 2px solid var(--border); }
         .markdown-body tr:nth-child(2n) { background-color: var(--bg-sidebar); }
         .markdown-body tr { background-color: var(--bg-main); border-top: 1px solid var(--border); }
 
@@ -276,6 +280,7 @@
                 <button data-cmd="admonition" title="Tip">💡</button>
                 <button data-cmd="table" title="Table">📅</button>
                 <button data-cmd="image" title="Image">🖼️</button>
+                <button data-cmd="format" title="Format Document">✨</button>
                 
                 <div class="dropdown">
                     <button id="yamlBtn" title="YAML Templates" style="font-size:11px; width:auto;">YAML ▼</button>
@@ -292,7 +297,7 @@
             </div>
             
             <div class="editor-wrapper">
-                <textarea id="editor" placeholder="파일을 선택하세요."></textarea>
+                <textarea id="editor" placeholder="파일을 선택하세요." spellcheck="false"></textarea>
                 <div class="status-bar">
                     <div class="status-msg" id="statusMsg"></div>
                     <div class="stat-item" id="wordCount">단어: 0</div>
@@ -426,13 +431,30 @@
 
                     ui.newFileBtn.addEventListener('click', () => App.FS.openCreateModal('file'));
                     ui.newFolderBtn.addEventListener('click', () => { App.FS.openCreateModal('folder'); });
+                    
                     ui.newFileBtn.onclick = () => App.FS.openCreateModal('file');
+                    
                     ui.createItemBtn.addEventListener('click', App.FS.createItem);
+
+                    const debouncedRender = App.Utils.debounce((val) => {
+                        App.Preview.render(val);
+                        App.Editor.updateStats(val);
+                    }, 300);
+
+                    const debouncedSave = App.Utils.debounce(() => {
+                        if(App.state.autoSave && App.state.currentHandle && App.state.isDirty) App.FS.saveFileToDisk(true);
+                    }, 2000);
+
+                    App.state.editor.on('change', (cm) => {
+                         // This is handled in initCodeMirror but here for reference
+                         // Handled inside initCodeMirror
+                    });
 
                     ui.preview.addEventListener('scroll', () => { App.Utils.syncScroll('preview'); App.TOC.highlight(); });
 
                     ui.toolbar.addEventListener('click', App.Editor.handleToolbar);
                     
+                    // YAML Dropdown Logic
                     ui.yamlBtn.addEventListener('click', (e) => {
                         e.stopPropagation();
                         ui.yamlDropdown.classList.toggle('show');
@@ -451,6 +473,7 @@
                     });
 
                     ui.themeToggle.addEventListener('click', App.Utils.toggleTheme);
+                    
                     ui.closeNewItemModal.addEventListener('click', App.Utils.closeModals);
                     ui.closeRenameModal.addEventListener('click', App.Utils.closeModals);
                     ui.closeTableModal.addEventListener('click', App.Utils.closeModals);
@@ -467,9 +490,11 @@
 
                     document.addEventListener('click', () => ui.ctxMenu.style.display = 'none');
                     document.addEventListener('keydown', e => {
+                         // Global save shortcut handled in editor init, but here for safety
                         if((e.ctrlKey||e.metaKey) && e.key === 's') { e.preventDefault(); App.FS.saveFileToDisk(); }
                     });
                     
+                    // Event Delegation for Tree
                     ui.fileTree.addEventListener('click', (e) => {
                         const item = e.target.closest('.tree-item');
                         if (!item) return;
@@ -490,13 +515,16 @@
                         if (!item) return;
                         e.preventDefault(); e.stopPropagation();
                         App.state.contextTarget = { handle: item._handle, parent: item._parent, kind: item.dataset.kind };
+                        // Update active folder based on context
                         if (item.dataset.kind === 'directory') App.state.activeFolderHandle = item._handle;
                         else App.state.activeFolderHandle = item._parent;
+
                         ui.ctxMenu.style.display = 'block';
                         ui.ctxMenu.style.left = `${e.pageX}px`;
                         ui.ctxMenu.style.top = `${e.pageY}px`;
                     });
 
+                    // Drag & Drop Delegation
                     ui.fileTree.addEventListener('dragstart', (e) => {
                         const item = e.target.closest('.tree-item');
                         if (!item) return;
@@ -523,6 +551,7 @@
                         if (App.state.dragSource && destDir) await App.FS.transferEntry(App.state.dragSource, destDir, null, true);
                     });
                     
+                    // Preview Index Card Click Delegation
                     ui.preview.addEventListener('click', async (e) => {
                         const card = e.target.closest('.index-card');
                         if (card && card.dataset.name) {
@@ -545,10 +574,12 @@
                         }
                     });
 
+                    // Resizers
                     ui.resizer1.addEventListener('mousedown', e => App.Editor.startResize(e, 0));
                     ui.resizer2.addEventListener('mousedown', e => App.Editor.startResize(e, 2));
                     ui.resizer3.addEventListener('mousedown', e => App.Editor.startResize(e, 4));
 
+                    // Modal Inputs Enter Key
                     document.querySelectorAll('.modal input').forEach(input => {
                         input.addEventListener('keydown', e => {
                             if(e.key === 'Enter') {
@@ -656,16 +687,14 @@
                     }
                     // 2. Handle Untitled
                     if (!App.state.currentHandle || App.state.currentHandle.kind === 'virtual') {
+                        // [UPDATED] Use showSaveFilePicker for untitled files
                         try {
-                            const dir = App.state.activeFolderHandle || App.state.rootHandle;
-                            const uniqueName = await App.FS.getUniqueName(dir, 'untitled.md');
-                            const newHandle = await dir.getFileHandle(uniqueName, { create: true });
-                            App.state.currentHandle = newHandle;
-                            App.ui.docHeader.innerText = uniqueName;
-                            await App.FS.refreshTree(); 
+                            const opts = { suggestedName: 'untitled.md', types: [{ description: 'Markdown File', accept: {'text/markdown': ['.md']} }] };
+                            const handle = await window.showSaveFilePicker(opts);
+                            App.state.currentHandle = handle;
+                            // Proceed to save
                         } catch (err) {
-                            console.error(err);
-                            if(!silent) alert('파일 생성 실패: ' + err.message);
+                            if(err.name !== 'AbortError') alert('저장이 취소되었습니다.');
                             return;
                         }
                     }
@@ -771,7 +800,10 @@
 
             Editor: {
                 initCodeMirror() {
+                    // Remove old textarea logic
                     const textarea = document.getElementById('editor');
+                    if(textarea.style.display === 'none') return; // prevent re-init if already done
+                    
                     App.state.editor = CodeMirror.fromTextArea(textarea, {
                         mode: 'markdown',
                         theme: App.state.theme === 'dark' ? 'atom-one-dark' : 'default',
@@ -815,6 +847,7 @@
                     const cmd = btn.dataset.cmd;
                     if(cmd === 'table') return App.Utils.openModal('tableModal');
                     if(cmd === 'image') return App.Editor.insertText('![Alt Text](URL)', ''); 
+                    if(cmd === 'format') return App.Tools.formatDocument(); // [NEW] Format
                     if(cmd === 'frontmatter') return;
 
                     const t = { 
@@ -832,10 +865,8 @@
                     const cursor = doc.getCursor();
                     const selection = doc.getSelection();
                     doc.replaceSelection(pre + selection + post);
-                    // Move cursor back inside
                     if(post) {
                         const newPos = { line: cursor.line, ch: cursor.ch + pre.length + selection.length };
-                         // Simple cursor adjustment not always perfect for multiline, but ok for inline
                         doc.setCursor(newPos); 
                     }
                     App.state.editor.focus();
@@ -856,7 +887,7 @@
                     const words = text.trim().split(/\s+/).filter(x=>x).length;
                     App.ui.wordCount.innerText = `단어: ${words}`;
                 },
-                startResize(e, colIdx) { /* Same as before but uses overlay divs over iframes if needed, CM is div based so ok */ }
+                startResize(e, colIdx) { /* handled via Core.initResizers */ }
             },
 
             Tools: {
@@ -866,6 +897,33 @@
                     for(let i=0; i<r; i++) txt += '| ' + Array(c).fill('Cell').join(' | ') + ' |\n';
                     App.Editor.insertText(txt, '');
                     App.Utils.closeModals();
+                },
+                // [NEW] Format Document
+                formatDocument() {
+                    if (typeof prettier === 'undefined') return alert('Prettier 라이브러리 로딩 중...');
+                    const editor = App.state.editor;
+                    const cursor = editor.getCursor();
+                    const content = editor.getValue();
+                    try {
+                        const formatted = prettier.format(content, {
+                            parser: "markdown",
+                            plugins: prettierPlugins,
+                            printWidth: 80,
+                            proseWrap: "preserve",
+                            tabWidth: 2,
+                            singleQuote: true
+                        });
+                        if (content !== formatted) {
+                            editor.setValue(formatted);
+                            editor.setCursor(cursor);
+                            App.Utils.showStatus('문서 포맷팅 완료');
+                        } else {
+                            App.Utils.showStatus('변경 사항 없음');
+                        }
+                    } catch (e) {
+                        console.error(e);
+                        alert("포맷팅 실패: " + e.message);
+                    }
                 }
             },
 
@@ -877,6 +935,7 @@
                         App.ui.tocList.innerHTML = '';
                         try {
                             const data = JSON.parse(text);
+                            // Docusaurus Index Style
                             if (data.label || data.link) {
                                 let html = `<div class="category-page-header">
                                     <h1 class="cat-title">${App.Utils.escapeHtml(data.label || 'Category')}</h1>`;
@@ -946,13 +1005,6 @@
                 }
             },
 
-            Sidebar: {
-                filter(k) {
-                    const items = App.ui.fileTree.querySelectorAll('.tree-item');
-                    items.forEach(i => i.style.display = i.innerText.toLowerCase().includes(k.toLowerCase()) ? 'flex' : 'none');
-                }
-            },
-
             Utils: {
                 applyTheme(t) { 
                     document.body.classList.toggle('dark-mode', t === 'dark'); 
@@ -970,7 +1022,7 @@
                         const r = scrollInfo.top / (scrollInfo.height - scrollInfo.clientHeight);
                         preview.scrollTop = r * (preview.scrollHeight - preview.clientHeight);
                     } else {
-                        // Reverse sync is tricky with CM, simplified here
+                        // Reverse sync skipped for simplicity with CM
                     }
                 },
                 updateSaveBtnState() { App.ui.saveBtn.classList.toggle('dirty', App.state.isDirty); },
