@@ -160,7 +160,7 @@
         #preview blockquote { border-left: 4px solid var(--primary); padding: 10px 20px; background: var(--primary-light); border-radius: 0 8px 8px 0; margin-bottom: 20px; }
         #preview img { max-width: 100%; border-radius: 6px; }
 
-        /* [NEW] Table Styles for Preview */
+        /* Table Styles for Preview */
         .markdown-body table { width: 100%; border-collapse: collapse; margin-bottom: 16px; display: table; }
         .markdown-body th, .markdown-body td { border: 1px solid var(--border); padding: 8px 12px; line-height: 1.5; }
         .markdown-body th { font-weight: 600; background-color: var(--bg-sidebar); }
@@ -180,7 +180,7 @@
         .spinner { position: absolute; top: 50%; left: 50%; width: 30px; height: 30px; border: 3px solid rgba(0,0,0,0.1); border-top: 3px solid var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; z-index: 100; transform: translate(-50%, -50%); }
         @keyframes spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
         
-        .context-menu { position: absolute; background: var(--bg-modal); border: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 4px; z-index: 2000; display: none; width: 150px; overflow: hidden; }
+        .context-menu { position: absolute; background: var(--bg-modal); border: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 4px; z-index: 2000; display: none; width: 160px; overflow: hidden; }
         .ctx-item { padding: 10px 14px; cursor: pointer; font-size: 13px; color: var(--text-main); border-bottom: 1px solid var(--border); }
         .ctx-item:last-child { border-bottom: none; }
         .ctx-item:hover { background: var(--primary-light); color: var(--primary); }
@@ -237,12 +237,11 @@
             <div class="toolbar" id="toolbar">
                 <button data-cmd="bold" title="Bold"><b>B</b></button>
                 <button data-cmd="italic" title="Italic"><i>I</i></button>
-                <button data-cmd="strike" title="Strike"><s>S</s></button>
                 <span class="sep"></span>
                 <button data-cmd="h2">H2</button>
                 <button data-cmd="h3">H3</button>
                 <span class="sep"></span>
-                <button data-cmd="code" title="Block Code">Code</button>
+                <button data-cmd="code">Code</button>
                 <button data-cmd="inline" title="Inline Code">I</button>
                 <button data-cmd="task" title="Task List">☑️</button>
                 <button data-cmd="quote" title="Blockquote">❝</button>
@@ -327,6 +326,9 @@
     </div>
 
     <div id="ctxMenu" class="context-menu">
+        <div class="ctx-item" id="ctxNewFile">📄 새 파일</div>
+        <div class="ctx-item" id="ctxNewFolder">📂 새 폴더</div>
+        <div style="border-top:1px solid var(--border); margin:4px 0;"></div>
         <div class="ctx-item" id="ctxRename">✏️ 이름 변경</div>
         <div class="ctx-item" id="ctxDuplicate">👯 복제</div>
         <div class="ctx-item delete" id="ctxDelete">🗑️ 삭제</div>
@@ -357,7 +359,7 @@
                     'docHeader', 'toolbar', 'themeToggle', 'spinner', 'tocList', 'mainLayout',
                     'statusMsg', 'autoSaveToggle', 'modalOverlay', 'newItemModal', 'newItemName', 
                     'createItemBtn', 'closeNewItemModal', 'modalTitle', 'ctxMenu', 'ctxDelete', 
-                    'ctxRename', 'ctxDuplicate', 'renameModal', 'renameInput', 'renameBtn', 
+                    'ctxRename', 'ctxDuplicate', 'ctxNewFile', 'ctxNewFolder', 'renameModal', 'renameInput', 'renameBtn', 
                     'closeRenameModal', 'searchInput', 'newFileBtn', 'newFolderBtn', 'refreshBtn',
                     'sidebarOpenBtn', 'yamlBtn', 'yamlDropdown',
                     'tableModal', 'tableRows', 'tableCols', 'insertTableBtn', 'closeTableModal'
@@ -382,7 +384,7 @@
                 bindEvents() {
                     const ui = App.ui;
                     ui.openFolderBtn.addEventListener('click', App.FS.openDirectory);
-                    ui.sidebarOpenBtn.addEventListener('click', App.FS.openDirectory);
+                    ui.sidebarOpenBtn.addEventListener('click', App.FS.openDirectory); // Sidebar Button
                     ui.saveBtn.addEventListener('click', () => App.FS.saveFileToDisk());
                     ui.downloadBtn.addEventListener('click', App.FS.downloadAsFile);
                     ui.refreshBtn.addEventListener('click', () => App.FS.refreshTree());
@@ -418,7 +420,7 @@
                         }
                         
                         App.Utils.updateSaveBtnState();
-                        if (App.state.autoSave) App.Utils.showStatus('입력 중...');
+                        if (App.state.autoSave) App.Utils.showStatus('입력 중... (대기 저장)');
                         debouncedRender(e.target.value);
                         debouncedSave();
                     });
@@ -433,6 +435,7 @@
 
                     ui.toolbar.addEventListener('click', App.Editor.handleToolbar);
                     
+                    // [NEW] YAML Dropdown Logic
                     ui.yamlBtn.addEventListener('click', (e) => {
                         e.stopPropagation();
                         ui.yamlDropdown.classList.toggle('show');
@@ -460,10 +463,16 @@
                     ui.renameBtn.addEventListener('click', App.FS.renameItem);
                     ui.insertTableBtn.addEventListener('click', App.Tools.insertTable);
                     
+                    // Context Menu Events
                     ui.ctxDelete.addEventListener('click', App.FS.deleteItem);
                     ui.ctxRename.addEventListener('click', App.FS.openRenameModal);
                     ui.ctxDuplicate.addEventListener('click', App.FS.duplicateItem);
+                    ui.ctxNewFile.addEventListener('click', () => App.FS.openCreateModal('file'));
+                    ui.ctxNewFolder.addEventListener('click', () => App.FS.openCreateModal('folder'));
 
+                    document.addEventListener('click', () => ui.ctxMenu.style.display = 'none');
+                    
+                    // Event Delegation for Tree
                     ui.fileTree.addEventListener('click', (e) => {
                         const item = e.target.closest('.tree-item');
                         if (!item) return;
@@ -483,12 +492,17 @@
                         const item = e.target.closest('.tree-item');
                         if (!item) return;
                         e.preventDefault(); e.stopPropagation();
-                        App.state.contextTarget = { handle: item._handle, parent: item._parent };
+                        App.state.contextTarget = { handle: item._handle, parent: item._parent, kind: item.dataset.kind };
+                        // Update active folder based on context
+                        if (item.dataset.kind === 'directory') App.state.activeFolderHandle = item._handle;
+                        else App.state.activeFolderHandle = item._parent;
+
                         ui.ctxMenu.style.display = 'block';
                         ui.ctxMenu.style.left = `${e.pageX}px`;
                         ui.ctxMenu.style.top = `${e.pageY}px`;
                     });
 
+                    // Drag & Drop Delegation
                     ui.fileTree.addEventListener('dragstart', (e) => {
                         const item = e.target.closest('.tree-item');
                         if (!item) return;
@@ -515,6 +529,7 @@
                         if (App.state.dragSource && destDir) await App.FS.transferEntry(App.state.dragSource, destDir, null, true);
                     });
                     
+                    // Preview Index Card Click Delegation
                     ui.preview.addEventListener('click', async (e) => {
                         const card = e.target.closest('.index-card');
                         if (card && card.dataset.name) {
@@ -537,10 +552,12 @@
                         }
                     });
 
+                    // Resizers
                     ui.resizer1.addEventListener('mousedown', e => App.Editor.startResize(e, 0));
                     ui.resizer2.addEventListener('mousedown', e => App.Editor.startResize(e, 2));
                     ui.resizer3.addEventListener('mousedown', e => App.Editor.startResize(e, 4));
 
+                    // Modal Inputs Enter Key
                     document.querySelectorAll('.modal input').forEach(input => {
                         input.addEventListener('keydown', e => {
                             if(e.key === 'Enter') {
@@ -641,20 +658,32 @@
                     }
                 },
                 async saveFileToDisk(silent = false) {
-                    // [NEW] Handle virtual untitled file
-                    if (App.state.currentHandle && App.state.currentHandle.kind === 'virtual') {
+                    // [NEW] 1. Check Root Access
+                    if (!App.state.rootHandle) {
+                        if(!silent) alert('프로젝트 폴더를 먼저 열어주세요.');
+                        return;
+                    }
+
+                    // [NEW] 2. Handle Untitled / New File Creation (Auto-Naming)
+                    if (!App.state.currentHandle || App.state.currentHandle.kind === 'virtual') {
                         try {
-                            const opts = { suggestedName: 'untitled.md', types: [{ description: 'Markdown File', accept: {'text/markdown': ['.md']} }] };
-                            const handle = await window.showSaveFilePicker(opts);
-                            App.state.currentHandle = handle; // Now real handle
-                            // Proceed to save below
+                            const dir = App.state.activeFolderHandle || App.state.rootHandle;
+                            const uniqueName = await App.FS.getUniqueName(dir, 'untitled.md');
+                            const newHandle = await dir.getFileHandle(uniqueName, { create: true });
+                            
+                            App.state.currentHandle = newHandle;
+                            App.ui.docHeader.innerText = uniqueName; // Visual Update
+                            
+                            // Refresh Tree to show new file
+                            await App.FS.refreshTree(); 
                         } catch (err) {
-                            if(err.name !== 'AbortError') alert('저장 취소');
+                            console.error(err);
+                            if(!silent) alert('파일 생성 실패: ' + err.message);
                             return;
                         }
                     }
 
-                    if (!App.state.currentHandle) return !silent && alert('저장할 파일이 없습니다.');
+                    // 3. Write Content
                     try {
                         if(!silent || App.state.autoSave) App.Utils.showStatus('저장 중...');
                         const writable = await App.state.currentHandle.createWritable();
@@ -665,6 +694,26 @@
                         App.Utils.showStatus('저장됨');
                     } catch (err) { App.Utils.showStatus('저장 실패 (권한?)'); if(!silent) alert(err.message); }
                 },
+                // [NEW] Helper to find unique name like untitled (1).md
+                async getUniqueName(dirHandle, baseName) {
+                    let name = baseName;
+                    let count = 1;
+                    const extIndex = baseName.lastIndexOf('.');
+                    const namePart = extIndex !== -1 ? baseName.substring(0, extIndex) : baseName;
+                    const extPart = extIndex !== -1 ? baseName.substring(extIndex) : '';
+
+                    while (true) {
+                        try {
+                            await dirHandle.getFileHandle(name);
+                            // File exists, increment count
+                            name = `${namePart} (${count})${extPart}`;
+                            count++;
+                        } catch (err) {
+                            if (err.name === 'NotFoundError') return name; // Found unique name
+                            throw err; // Other error
+                        }
+                    }
+                },
                 downloadAsFile() {
                     const blob = new Blob([App.ui.editor.value], { type: 'text/plain;charset=utf-8' });
                     const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
@@ -673,7 +722,7 @@
                     URL.revokeObjectURL(a.href);
                 },
                 openCreateModal(type) {
-                    if(!App.state.rootHandle) return alert('프로젝트 폴더를 먼저 열어주세요.');
+                    if(!App.state.rootHandle) return alert('폴더를 열어주세요.');
                     App.state.createType = type;
                     App.ui.modalTitle.innerText = type === 'file' ? '새 파일 생성' : '새 폴더 생성';
                     App.Utils.openModal('newItemModal');
@@ -800,6 +849,7 @@
                         App.ui.tocList.innerHTML = '';
                         try {
                             const data = JSON.parse(text);
+                            // Docusaurus Index Style
                             if (data.label || data.link) {
                                 let html = `<div class="category-page-header">
                                     <h1 class="cat-title">${App.Utils.escapeHtml(data.label || 'Category')}</h1>`;
