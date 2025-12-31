@@ -24,6 +24,10 @@
             --note-bg: #f5f6f7; --note-border: #9e9e9e; --tip-bg: #f0fdf4; --tip-border: #25c2a0;
             --info-bg: #eff6ff; --info-border: #60a5fa; --warn-bg: #fffbf0; --warn-border: #fbbf24;
             --danger-bg: #fef2f2; --danger-border: #f87171;
+            /* Syntax Highlighting Overlay */
+            --editor-font: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            --editor-font-size: 14px;
+            --editor-line-height: 1.6;
         }
         body.dark-mode {
             --bg-main: #1b1b1d; --bg-sidebar: #242526; --bg-toolbar: #1b1b1d; --bg-status: #242526; --bg-modal: #242526;
@@ -100,8 +104,36 @@
         .toolbar { padding: 6px 8px; border-bottom: 1px solid var(--border); background: var(--bg-toolbar); display: flex; gap: 4px; flex-wrap: wrap; user-select: none; position: relative; }
         .toolbar button { background: transparent; border: 1px solid transparent; color: var(--text-main); padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 13px; }
         .toolbar button:hover { background: rgba(127,127,127,0.1); }
-        .editor-wrapper { flex: 1; position: relative; display: flex; flex-direction: column; }
-        #editor { flex: 1; width: 100%; padding: 20px; border: none; resize: none; outline: none; background: transparent; color: var(--text-main); font-family: 'SFMono-Regular', Consolas, monospace; font-size: 14px; line-height: 1.6; white-space: pre-wrap; overflow-wrap: break-word; }
+        .editor-wrapper { flex: 1; position: relative; display: flex; flex-direction: column; overflow: hidden; }
+
+        /* [UPDATED] Editor Overlay Structure */
+        .editor-container { position: relative; flex: 1; width: 100%; height: 100%; overflow: hidden; }
+        
+        .backdrop, #editor {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            margin: 0; padding: 20px; border: none;
+            font-family: var(--editor-font); font-size: var(--editor-font-size); line-height: var(--editor-line-height);
+            white-space: pre-wrap; word-wrap: break-word; overflow: auto;
+            box-sizing: border-box; resize: none;
+        }
+
+        .backdrop {
+            z-index: 1; pointer-events: none; background-color: transparent;
+            color: var(--text-main); /* Default text color for non-highlighted parts */
+        }
+        
+        .backdrop code {
+            font-family: inherit; font-size: inherit; padding: 0; background: transparent;
+        }
+
+        #editor {
+            z-index: 2; color: transparent; background: transparent;
+            caret-color: var(--text-main); /* Cursor color */
+            outline: none;
+        }
+        /* Selection color fix for transparent text */
+        #editor::selection { background: rgba(94, 53, 177, 0.2); color: transparent; }
+
         .status-bar { height: 26px; background: var(--bg-status); border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: flex-end; padding: 0 16px; font-size: 11px; color: var(--text-sub); gap: 16px; }
         .status-msg { margin-right: auto; font-weight: 600; color: var(--text-main); }
 
@@ -264,8 +296,13 @@
 
                 <button data-cmd="link">🔗</button>
             </div>
+            
             <div class="editor-wrapper">
-                <textarea id="editor" placeholder="파일을 선택하세요." spellcheck="false"></textarea>
+                <!-- [NEW] Editor Overlay Container -->
+                <div class="editor-container">
+                    <pre class="backdrop" aria-hidden="true"><code id="highlighting-content" class="language-markdown"></code></pre>
+                    <textarea id="editor" placeholder="파일을 선택하세요." spellcheck="false"></textarea>
+                </div>
                 <div class="status-bar">
                     <div class="status-msg" id="statusMsg"></div>
                     <div class="stat-item" id="wordCount">단어: 0</div>
@@ -326,7 +363,6 @@
     </div>
 
     <div id="ctxMenu" class="context-menu">
-        <!-- [CHANGED] Updated Text -->
         <div class="ctx-item" id="ctxNewFile">📄 하위 파일 생성</div>
         <div class="ctx-item" id="ctxNewFolder">📂 하위 폴더 생성</div>
         <div style="border-top:1px solid var(--border); margin:4px 0;"></div>
@@ -363,13 +399,15 @@
                     'ctxRename', 'ctxDuplicate', 'ctxNewFile', 'ctxNewFolder', 'renameModal', 'renameInput', 'renameBtn', 
                     'closeRenameModal', 'searchInput', 'newFileBtn', 'newFolderBtn', 'refreshBtn',
                     'sidebarOpenBtn', 'yamlBtn', 'yamlDropdown',
-                    'tableModal', 'tableRows', 'tableCols', 'insertTableBtn', 'closeTableModal'
+                    'tableModal', 'tableRows', 'tableCols', 'insertTableBtn', 'closeTableModal',
+                    'highlighting-content' // [NEW] Backdrop code element
                 ];
                 ids.forEach(id => this.ui[id] = document.getElementById(id));
                 // Resizers
                 this.ui.resizer1 = document.getElementById('resizer1');
                 this.ui.resizer2 = document.getElementById('resizer2');
                 this.ui.resizer3 = document.getElementById('resizer3');
+                this.ui.backdrop = document.querySelector('.backdrop'); // [NEW] Backdrop pre element
             },
 
             Core: {
@@ -424,19 +462,23 @@
                         if (App.state.autoSave) App.Utils.showStatus('입력 중... (대기 저장)');
                         debouncedRender(e.target.value);
                         debouncedSave();
+                        App.Editor.syncOverlay(); // [NEW] Sync Syntax Highlight
                     });
 
                     ui.editor.addEventListener('keydown', e => {
-                        if(e.key === 'Tab') { e.preventDefault(); document.execCommand('insertText', false, '  '); }
+                        if(e.key === 'Tab') { e.preventDefault(); document.execCommand('insertText', false, '  '); App.Editor.syncOverlay(); }
                         if((e.ctrlKey||e.metaKey) && e.key === 's') { e.preventDefault(); App.FS.saveFileToDisk(); }
                     });
 
-                    ui.editor.addEventListener('scroll', () => App.Utils.syncScroll('editor'));
+                    ui.editor.addEventListener('scroll', () => {
+                        App.Utils.syncScroll('editor');
+                        App.Editor.syncBackdropScroll(); // [NEW] Sync backdrop scroll
+                    });
                     ui.preview.addEventListener('scroll', () => { App.Utils.syncScroll('preview'); App.TOC.highlight(); });
 
                     ui.toolbar.addEventListener('click', App.Editor.handleToolbar);
                     
-                    // YAML Dropdown
+                    // YAML Dropdown Logic
                     ui.yamlBtn.addEventListener('click', (e) => {
                         e.stopPropagation();
                         ui.yamlDropdown.classList.toggle('show');
@@ -464,7 +506,6 @@
                     ui.renameBtn.addEventListener('click', App.FS.renameItem);
                     ui.insertTableBtn.addEventListener('click', App.Tools.insertTable);
                     
-                    // Context Menu Events
                     ui.ctxDelete.addEventListener('click', App.FS.deleteItem);
                     ui.ctxRename.addEventListener('click', App.FS.openRenameModal);
                     ui.ctxDuplicate.addEventListener('click', App.FS.duplicateItem);
@@ -641,6 +682,7 @@
                         App.Utils.showStatus('로드됨');
                         App.Preview.render(text);
                         App.Editor.updateStats(text);
+                        App.Editor.syncOverlay(); // [NEW] Sync highlight on load
                     } catch(e) { console.error(e); }
                 },
                 async tryLoadIndexFile(dirHandle) {
@@ -656,6 +698,7 @@
                         App.state.currentHandle = null;
                         App.ui.editor.value = "";
                         App.Preview.render("");
+                        App.Editor.syncOverlay();
                     }
                 },
                 async saveFileToDisk(silent = false) {
@@ -810,6 +853,7 @@
                     const ed = App.ui.editor;
                     ed.setRangeText(pre + ed.value.substring(ed.selectionStart, ed.selectionEnd) + post, ed.selectionStart, ed.selectionEnd, 'select');
                     ed.focus(); App.Preview.render(ed.value);
+                    App.Editor.syncOverlay(); // [NEW]
                 },
                 insertTemplate(type) {
                     const templates = {
@@ -822,10 +866,27 @@
                     const ed = App.ui.editor;
                     ed.setRangeText(text, ed.selectionStart, ed.selectionEnd, 'select');
                     ed.focus(); App.Preview.render(ed.value);
+                    App.Editor.syncOverlay(); // [NEW]
                 },
                 updateStats(text) {
                     const words = text.trim().split(/\s+/).filter(x=>x).length;
                     App.ui.wordCount.innerText = `단어: ${words}`;
+                },
+                // [NEW] Sync Overlay Content
+                syncOverlay() {
+                    const text = App.ui.editor.value;
+                    const safeText = App.Utils.escapeHtml(text);
+                    // Handle trailing newline
+                    const content = safeText.endsWith('\n') ? safeText + ' ' : safeText;
+                    App.ui['highlighting-content'].textContent = text; // Just set text, Highlight.js will parse
+                    hljs.highlightElement(App.ui['highlighting-content']);
+                },
+                // [NEW] Sync Backdrop Scroll
+                syncBackdropScroll() {
+                    const backdrop = App.ui.backdrop;
+                    const editor = App.ui.editor;
+                    backdrop.scrollTop = editor.scrollTop;
+                    backdrop.scrollLeft = editor.scrollLeft;
                 }
             },
 
@@ -956,7 +1017,6 @@
                 toggleLoading(s) { App.ui.spinner.classList.toggle('hidden', !s); },
                 escapeHtml(s) { return s?.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); },
                 
-                // [UPDATED] Robust YAML Parsing
                 parseFM(text) {
                     // Allow whitespace before ---
                     const m = text.match(/^\s*---\n([\s\S]+?)\n---/);
