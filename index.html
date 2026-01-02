@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CXO Markdown Editor</title>
     
-    <!-- 1. Libraries -->
-    <!-- Marked & Highlight.js -->
+    <!-- External Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
@@ -20,6 +19,8 @@
     <!-- CodeMirror 5 (Core + Modes + Addons) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/atom-one-dark.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.css">
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/markdown/markdown.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script>
@@ -27,9 +28,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/selection/active-line.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/display/placeholder.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.js"></script>
 
     <style>
-        /* --- CSS Variables --- */
         :root {
             --bg-main: #ffffff; --bg-sidebar: #f6f8fa; --bg-toolbar: #ffffff; --bg-status: #f0f0f0; --bg-modal: #ffffff;
             --text-main: #1c1e21; --text-sub: #525860;
@@ -56,7 +57,6 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; height: 100vh; display: flex; flex-direction: column; background: var(--bg-main); color: var(--text-main); overflow: hidden; }
 
-        /* Header */
         header { height: 50px; background: var(--header-bg); color: var(--header-text); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; user-select: none; z-index: 100; }
         .brand { font-weight: 800; font-size: 1.1rem; } .brand span { color: #a29bfe; }
         .controls { display: flex; align-items: center; gap: 8px; }
@@ -117,10 +117,11 @@
         }
         .empty-state-btn:hover { background: var(--primary-hover); }
 
-        /* Toolbar & Editor */
+        /* Editor Area */
         .toolbar { padding: 6px 8px; border-bottom: 1px solid var(--border); background: var(--bg-toolbar); display: flex; gap: 4px; flex-wrap: wrap; user-select: none; position: relative; }
         .toolbar button { background: transparent; border: 1px solid transparent; color: var(--text-main); padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 13px; }
         .toolbar button:hover { background: rgba(127,127,127,0.1); }
+        
         .editor-wrapper { flex: 1; position: relative; display: flex; flex-direction: column; overflow: hidden; }
 
         /* CodeMirror Customization */
@@ -133,6 +134,11 @@
         
         .status-bar { height: 26px; background: var(--bg-status); border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: flex-end; padding: 0 16px; font-size: 11px; color: var(--text-sub); gap: 16px; }
         .status-msg { margin-right: auto; font-weight: 600; color: var(--text-main); }
+
+        /* CodeMirror Hints */
+        .CodeMirror-hints { background: var(--bg-modal); border: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 4px; padding: 4px 0; z-index: 9999; }
+        .CodeMirror-hint { color: var(--text-main); padding: 4px 12px; font-family: sans-serif; font-size: 13px; }
+        .CodeMirror-hint-active { background: var(--primary); color: #fff; }
 
         /* Dropdown Menu */
         .dropdown { position: relative; display: inline-block; }
@@ -296,7 +302,7 @@
             </div>
             
             <div class="editor-wrapper">
-                <textarea id="editor" placeholder="파일을 선택하거나 내용을 입력하세요..." spellcheck="false"></textarea>
+                <textarea id="editor" placeholder="파일을 선택하세요." spellcheck="false"></textarea>
                 <div class="status-bar">
                     <div class="status-msg" id="statusMsg"></div>
                     <div class="stat-item" id="wordCount">단어: 0</div>
@@ -373,7 +379,7 @@
                 isDirty: false, contextTarget: null, dragSource: null,
                 autoSave: localStorage.getItem('autoSave') === 'true',
                 columnWidths: JSON.parse(localStorage.getItem('split-pos')) || [240, 4, 500, 4, 500, 4, 220],
-                editor: null
+                editor: null 
             },
             ui: {},
 
@@ -381,18 +387,14 @@
                 this.cacheDOM();
                 this.Core.loadSettings();
                 
-                // [FIX] CodeMirror Initialization Safety Check
-                if (typeof CodeMirror !== 'undefined') {
-                    this.Editor.initCodeMirror();
-                } else {
-                    // Retry or fallback
-                    console.warn('CodeMirror loading... retrying in 500ms');
-                    setTimeout(() => { if(typeof CodeMirror !== 'undefined') this.Editor.initCodeMirror(); }, 500);
-                }
+                // Safe CM Init
+                if (typeof CodeMirror !== 'undefined') this.Editor.initCodeMirror();
+                else setTimeout(() => { if(typeof CodeMirror!=='undefined') this.Editor.initCodeMirror(); }, 500);
 
                 this.Core.bindEvents();
                 this.Core.initResizers();
                 marked.setOptions({ gfm: true, breaks: true });
+                // this.Indexer.init(); 
             },
 
             cacheDOM() {
@@ -407,6 +409,7 @@
                     'tableModal', 'tableRows', 'tableCols', 'insertTableBtn', 'closeTableModal', 'wordCount'
                 ];
                 ids.forEach(id => this.ui[id] = document.getElementById(id));
+                // Resizers
                 this.ui.resizer1 = document.getElementById('resizer1');
                 this.ui.resizer2 = document.getElementById('resizer2');
                 this.ui.resizer3 = document.getElementById('resizer3');
@@ -458,6 +461,7 @@
 
                     ui.toolbar.addEventListener('click', App.Editor.handleToolbar);
                     
+                    // YAML Dropdown Logic
                     ui.yamlBtn.addEventListener('click', (e) => {
                         e.stopPropagation();
                         ui.yamlDropdown.classList.toggle('show');
@@ -496,6 +500,7 @@
                         if((e.ctrlKey||e.metaKey) && e.key === 's') { e.preventDefault(); App.FS.saveFileToDisk(); }
                     });
                     
+                    // Event Delegation for Tree
                     ui.fileTree.addEventListener('click', (e) => {
                         const item = e.target.closest('.tree-item');
                         if (!item) return;
@@ -516,13 +521,16 @@
                         if (!item) return;
                         e.preventDefault(); e.stopPropagation();
                         App.state.contextTarget = { handle: item._handle, parent: item._parent, kind: item.dataset.kind };
+                        // Update active folder based on context
                         if (item.dataset.kind === 'directory') App.state.activeFolderHandle = item._handle;
                         else App.state.activeFolderHandle = item._parent;
+
                         ui.ctxMenu.style.display = 'block';
                         ui.ctxMenu.style.left = `${e.pageX}px`;
                         ui.ctxMenu.style.top = `${e.pageY}px`;
                     });
 
+                    // Drag & Drop Delegation
                     ui.fileTree.addEventListener('dragstart', (e) => {
                         const item = e.target.closest('.tree-item');
                         if (!item) return;
@@ -549,6 +557,7 @@
                         if (App.state.dragSource && destDir) await App.FS.transferEntry(App.state.dragSource, destDir, null, true);
                     });
                     
+                    // Preview Index Card Click Delegation
                     ui.preview.addEventListener('click', async (e) => {
                         const card = e.target.closest('.index-card');
                         if (card && card.dataset.name) {
@@ -571,6 +580,7 @@
                         }
                     });
 
+                    // Resizers
                     ui.resizer1.addEventListener('mousedown', e => App.Editor.startResize(e, 0));
                     ui.resizer2.addEventListener('mousedown', e => App.Editor.startResize(e, 2));
                     ui.resizer3.addEventListener('mousedown', e => App.Editor.startResize(e, 4));
@@ -688,7 +698,6 @@
                             const handle = await window.showSaveFilePicker(opts);
                             App.state.currentHandle = handle;
                             
-                            // [FIX] Update UI and Refresh Tree
                             App.ui.docHeader.innerText = handle.name; 
                             await App.FS.refreshTree(); 
                             
@@ -707,8 +716,6 @@
                         App.state.isDirty = false;
                         App.Utils.updateSaveBtnState();
                         App.Utils.showStatus('저장됨');
-                        // Update preview immediately
-                        App.Preview.render(App.state.editor.getValue());
                     } catch (err) { App.Utils.showStatus('저장 실패 (권한?)'); if(!silent) alert(err.message); }
                 },
                 async getUniqueName(dirHandle, baseName) {
@@ -847,9 +854,8 @@
                     const btn = e.target.closest('button'); if(!btn || !btn.dataset.cmd) return;
                     const cmd = btn.dataset.cmd;
                     if(cmd === 'table') return App.Utils.openModal('tableModal');
-                    // Image: No Modal, direct input
                     if(cmd === 'image') return App.Editor.insertText('![Alt Text](URL)', ''); 
-                    if(cmd === 'format') return App.Tools.formatDocument(); // [NEW] Format
+                    if(cmd === 'format') return App.Tools.formatDocument(); 
                     if(cmd === 'frontmatter') return;
 
                     const t = { 
@@ -889,7 +895,43 @@
                     const words = text.trim().split(/\s+/).filter(x=>x).length;
                     App.ui.wordCount.innerText = `단어: ${words}`;
                 },
-                startResize(e, colIdx) { /* handled via Core.initResizers */ }
+                handleLinkHint(cm) {
+                    // Trigger Hint
+                    cm.replaceSelection("[");
+                    CodeMirror.showHint(cm, App.Indexer.hintFunc, { completeSingle: false });
+                },
+                startResize(e, colIdx) { /* handled via Core */ }
+            },
+
+            Indexer: {
+                index: [],
+                async rebuild(root) {
+                    this.index = [];
+                    if(root) await this.scan(root, '');
+                },
+                async scan(dir, path) {
+                    for await (const entry of dir.values()) {
+                        if (entry.kind === 'file' && entry.name.endsWith('.md')) {
+                            this.index.push({ name: entry.name, path: path + '/' + entry.name });
+                        } else if (entry.kind === 'directory') {
+                            await this.scan(entry, path + '/' + entry.name);
+                        }
+                    }
+                },
+                hintFunc(cm) {
+                    const cur = cm.getCursor();
+                    const token = cm.getTokenAt(cur);
+                    const list = App.Indexer.index.filter(i => i.name.toLowerCase().includes(token.string.toLowerCase()));
+                    
+                    return {
+                        list: list.map(i => ({ 
+                            text: `[${i.name}](${i.path})`, 
+                            displayText: i.name 
+                        })),
+                        from: CodeMirror.Pos(cur.line, token.start),
+                        to: CodeMirror.Pos(cur.line, token.end)
+                    };
+                }
             },
 
             Tools: {
@@ -900,32 +942,13 @@
                     App.Editor.insertText(txt, '');
                     App.Utils.closeModals();
                 },
-                // [NEW] Format Document
                 formatDocument() {
-                    if (typeof prettier === 'undefined') return alert('Prettier 라이브러리 로딩 중...');
+                    if (typeof prettier === 'undefined') return alert('Prettier 로딩 중...');
                     const editor = App.state.editor;
-                    const cursor = editor.getCursor();
-                    const content = editor.getValue();
                     try {
-                        const formatted = prettier.format(content, {
-                            parser: "markdown",
-                            plugins: prettierPlugins,
-                            printWidth: 80,
-                            proseWrap: "preserve",
-                            tabWidth: 2,
-                            singleQuote: true
-                        });
-                        if (content !== formatted) {
-                            editor.setValue(formatted);
-                            editor.setCursor(cursor);
-                            App.Utils.showStatus('문서 포맷팅 완료');
-                        } else {
-                            App.Utils.showStatus('변경 사항 없음');
-                        }
-                    } catch (e) {
-                        console.error(e);
-                        alert("포맷팅 실패: " + e.message);
-                    }
+                        const formatted = prettier.format(editor.getValue(), { parser: "markdown", plugins: prettierPlugins, printWidth: 80, proseWrap: "preserve" });
+                        if(editor.getValue() !== formatted) { editor.setValue(formatted); App.Utils.showStatus('포맷팅 완료'); }
+                    } catch (e) { alert("포맷팅 실패"); }
                 }
             },
 
@@ -980,7 +1003,7 @@
                     } else {
                         const { title, body } = App.Utils.parseFM(text);
                         App.ui.docHeader.innerText = title || (App.state.currentHandle?.kind === 'virtual' ? 'untitled.md (저장되지 않음)' : (App.state.currentHandle?.name || "Untitled"));
-                        let html = marked.parse(body);
+                        let html = marked.parse(body, { breaks: true, gfm: true });
                         html = html.replace(/<p>:::(note|tip|info|warning|danger)([\s\S]*?):::<\/p>/g, (m,t,c)=>`<div class="admonition ${t}"><span class="admonition-title">${t}</span>${c}</div>`);
                         App.ui.preview.innerHTML = DOMPurify.sanitize(html, { ADD_TAGS:['tabs','tabitem','details','summary'], ADD_ATTR:['label','value', 'data-name'] });
                         App.Utils.transformTabs(); App.TOC.generate();
@@ -1016,15 +1039,16 @@
                 toggleTheme() { App.state.theme = App.state.theme==='dark'?'light':'dark'; localStorage.setItem('theme', App.state.theme); App.Utils.applyTheme(App.state.theme); },
                 debounce(fn, d) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), d); } },
                 syncScroll(src) {
-                    const { editor, preview } = App.ui;
+                    const { preview } = App.ui;
                     if (!App.state.editor) return;
-                    const scrollInfo = App.state.editor.getScrollInfo();
+                    const cm = App.state.editor;
+                    const info = cm.getScrollInfo();
                     
                     if(src === 'editor') {
-                        const r = scrollInfo.top / (scrollInfo.height - scrollInfo.clientHeight);
+                        const r = info.top / (info.height - info.clientHeight);
                         preview.scrollTop = r * (preview.scrollHeight - preview.clientHeight);
                     } else {
-                        // Reverse sync skipped for simplicity with CM
+                        // Optional reverse sync logic
                     }
                 },
                 updateSaveBtnState() { App.ui.saveBtn.classList.toggle('dirty', App.state.isDirty); },
