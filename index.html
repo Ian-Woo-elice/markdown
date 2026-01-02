@@ -124,7 +124,7 @@
         .CodeMirror-hint { color: var(--text-main); padding: 4px 12px; font-family: sans-serif; font-size: 13px; }
         .CodeMirror-hint-active { background: var(--primary); color: #fff; }
 
-        /* Dropdown */
+        /* Dropdown Menu */
         .dropdown { position: relative; display: inline-block; }
         .dropdown-menu { display: none; position: absolute; top: 100%; left: 0; min-width: 160px; background: var(--bg-modal); border: 1px solid var(--border); border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 100; margin-top: 4px; }
         .dropdown-menu.show { display: block; }
@@ -132,11 +132,11 @@
         .dropdown-item:hover { background: var(--primary-light); color: var(--primary); }
         .dropdown-divider { height: 1px; background: var(--border); margin: 4px 0; }
 
-        /* Preview Styles */
+        /* Preview Details */
         .doc-header { padding: 30px 40px 10px; font-size: 2em; font-weight: 800; color: var(--text-main); }
         #preview { flex: 1; padding: 10px 40px 50px; overflow-y: auto; font-size: 16px; line-height: 1.7; scroll-behavior: smooth; overflow-wrap: break-word; }
 
-        /* Docusaurus Category Index */
+        /* Docusaurus Category Index UI */
         .category-page-header { padding-bottom: 30px; border-bottom: 1px solid var(--border); margin-bottom: 30px; }
         .cat-title { font-size: 3rem !important; font-weight: 800 !important; color: var(--text-main); border: none !important; margin: 0 0 16px 0 !important; }
         .cat-desc { font-size: 1.25rem; color: var(--text-sub); line-height: 1.6; margin: 0; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
@@ -159,8 +159,8 @@
         #preview pre { background: var(--code-bg); padding: 16px; border-radius: 8px; overflow: auto; margin-bottom: 20px; }
         #preview blockquote { border-left: 4px solid var(--primary); padding: 10px 20px; background: var(--primary-light); border-radius: 0 8px 8px 0; margin-bottom: 20px; }
         #preview img { max-width: 100%; border-radius: 6px; }
-        
-        /* Table Styles */
+
+        /* Table Styles for Preview */
         .markdown-body table { width: 100%; border-collapse: collapse; margin-bottom: 16px; display: table; }
         .markdown-body th, .markdown-body td { border: 1px solid var(--border); padding: 8px 12px; line-height: 1.5; text-align: left; }
         .markdown-body th { font-weight: 600; background-color: var(--bg-sidebar); border-bottom: 2px solid var(--border); }
@@ -179,10 +179,13 @@
         .hidden { display: none; }
         .spinner { position: absolute; top: 50%; left: 50%; width: 30px; height: 30px; border: 3px solid rgba(0,0,0,0.1); border-top: 3px solid var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; z-index: 100; transform: translate(-50%, -50%); }
         @keyframes spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
+        
         .context-menu { position: absolute; background: var(--bg-modal); border: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 4px; z-index: 2000; display: none; width: 160px; overflow: hidden; }
         .ctx-item { padding: 10px 14px; cursor: pointer; font-size: 13px; color: var(--text-main); border-bottom: 1px solid var(--border); }
+        .ctx-item:last-child { border-bottom: none; }
         .ctx-item:hover { background: var(--primary-light); color: var(--primary); }
         .ctx-item.delete { color: var(--danger-border); }
+        
         @media (max-width: 1200px) { .toc-area { display: none; } }
     </style>
 </head>
@@ -205,6 +208,7 @@
     </header>
 
     <div class="main-container" id="mainLayout">
+        <!-- Sidebar -->
         <aside class="pane pane-sidebar" id="sidebarPane">
             <div class="sidebar-header">
                 <input type="text" id="searchInput" class="search-box" placeholder="파일명 검색...">
@@ -218,12 +222,17 @@
                 <div class="empty-state-container">
                     <div class="empty-state-icon">📂</div>
                     <div class="empty-state-title">No Project Open</div>
-                    <div class="empty-state-desc">폴더를 열어 시작하세요.</div>
+                    <div class="empty-state-desc">
+                        폴더를 열어 Docusaurus 문서<br>작성을 시작하세요.
+                    </div>
                     <button id="sidebarOpenBtn" class="empty-state-btn">폴더 열기</button>
                 </div>
             </div>
         </aside>
+
         <div class="resizer" id="resizer1"></div>
+
+        <!-- Editor -->
         <main class="pane pane-editor" id="editorPane">
             <div class="toolbar" id="toolbar">
                 <button data-cmd="bold" title="Bold"><b>B</b></button>
@@ -242,17 +251,21 @@
                 <button data-cmd="table" title="Table">📅</button>
                 <button data-cmd="image" title="Image">🖼️</button>
                 <button data-cmd="format" title="Format Document">✨</button>
+                
                 <div class="dropdown">
                     <button id="yamlBtn" title="YAML Templates" style="font-size:11px; width:auto;">YAML ▼</button>
                     <div class="dropdown-menu" id="yamlDropdown">
                         <div class="dropdown-item" data-template="generic">📝 기본 (Generic)</div>
+                        <div class="dropdown-divider"></div>
                         <div class="dropdown-item" data-template="doc">📘 문서 (Docs)</div>
                         <div class="dropdown-item" data-template="blog">📰 블로그 (Blog)</div>
                         <div class="dropdown-item" data-template="category">📂 카테고리 (JSON)</div>
                     </div>
                 </div>
+
                 <button data-cmd="link">🔗</button>
             </div>
+            
             <div class="editor-wrapper">
                 <textarea id="editor" placeholder="파일을 선택하세요." spellcheck="false"></textarea>
                 <div class="status-bar">
@@ -261,13 +274,19 @@
                 </div>
             </div>
         </main>
+
         <div class="resizer" id="resizer2"></div>
+
+        <!-- Preview -->
         <section class="pane pane-preview" id="previewPane">
             <div id="spinner" class="spinner hidden"></div>
             <div id="docHeader" class="doc-header"></div>
             <div id="preview" class="markdown-body"></div>
         </section>
+
         <div class="resizer" id="resizer3"></div>
+
+        <!-- TOC -->
         <aside class="pane pane-toc" id="tocPane">
             <div class="toc-header">ON THIS PAGE</div>
             <ul id="tocList" class="toc-list"></ul>
@@ -276,23 +295,35 @@
 
     <!-- Modals -->
     <div id="modalOverlay" class="modal-overlay">
+        <!-- New Item Modal -->
         <div id="newItemModal" class="modal hidden">
             <h3 id="modalTitle">항목 생성</h3>
             <div class="input-group"><label>이름</label><input type="text" id="newItemName" placeholder="파일명/폴더명 입력"></div>
-            <div class="modal-footer"><button class="btn" id="closeNewItemModal">취소</button><button class="btn primary" id="createItemBtn">확인</button></div>
+            <div class="modal-footer">
+                <button class="btn" id="closeNewItemModal">취소</button>
+                <button class="btn primary" id="createItemBtn">확인</button>
+            </div>
         </div>
+        <!-- Rename Modal -->
         <div id="renameModal" class="modal hidden">
             <h3>이름 변경</h3>
             <div class="input-group"><label>새 이름</label><input type="text" id="renameInput"></div>
-            <div class="modal-footer"><button class="btn" id="closeRenameModal">취소</button><button class="btn primary" id="renameBtn">변경</button></div>
+            <div class="modal-footer">
+                <button class="btn" id="closeRenameModal">취소</button>
+                <button class="btn primary" id="renameBtn">변경</button>
+            </div>
         </div>
+        <!-- Table Modal -->
         <div id="tableModal" class="modal hidden">
             <h3>표 생성하기</h3>
             <div class="modal-body">
                 <div class="input-group"><label>행</label><input type="number" id="tableRows" value="3"></div>
                 <div class="input-group"><label>열</label><input type="number" id="tableCols" value="3"></div>
             </div>
-            <div class="modal-footer"><button class="btn" id="closeTableModal">취소</button><button class="btn primary" id="insertTableBtn">삽입</button></div>
+            <div class="modal-footer">
+                <button class="btn" id="closeTableModal">취소</button>
+                <button class="btn primary" id="insertTableBtn">삽입</button>
+            </div>
         </div>
     </div>
 
@@ -307,232 +338,642 @@
 
     <script>
         const App = {
-            state: { rootHandle: null, currentHandle: null, activeFolderHandle: null, theme: localStorage.getItem('theme') || 'light', isDirty: false, contextTarget: null, dragSource: null, autoSave: localStorage.getItem('autoSave') === 'true', columnWidths: JSON.parse(localStorage.getItem('split-pos')) || [240, 4, 500, 4, 500, 4, 220], editor: null },
+            state: {
+                rootHandle: null, currentHandle: null, activeFolderHandle: null,
+                theme: localStorage.getItem('theme') || 'light',
+                isDirty: false, contextTarget: null, dragSource: null,
+                autoSave: localStorage.getItem('autoSave') === 'true',
+                columnWidths: JSON.parse(localStorage.getItem('split-pos')) || [240, 4, 500, 4, 500, 4, 220],
+                editor: null 
+            },
             ui: {},
+
             init() {
-                this.cacheDOM(); this.Core.loadSettings();
+                this.cacheDOM();
+                this.Core.loadSettings();
+                // Safe CM Init
                 if (typeof CodeMirror !== 'undefined') this.Editor.initCodeMirror();
                 else setTimeout(() => { if (typeof CodeMirror !== 'undefined') this.Editor.initCodeMirror(); }, 500);
-                this.Core.bindEvents(); this.Core.initResizers();
-                marked.setOptions({ gfm: true, breaks: false }); // [FIX] Standard Line Break
+
+                this.Core.bindEvents();
+                this.Core.initResizers();
+                
+                // [FIXED] Force standard markdown line breaks (space-space-enter or double enter)
+                marked.setOptions({ gfm: true, breaks: false });
+                
                 if(this.Indexer) this.Indexer.init();
             },
+
             cacheDOM() {
-                const ids = ['openFolderBtn', 'saveBtn', 'downloadBtn', 'fileTree', 'preview', 'docHeader', 'toolbar', 'themeToggle', 'spinner', 'tocList', 'mainLayout', 'statusMsg', 'autoSaveToggle', 'modalOverlay', 'newItemModal', 'newItemName', 'createItemBtn', 'closeNewItemModal', 'modalTitle', 'ctxMenu', 'ctxDelete', 'ctxRename', 'ctxDuplicate', 'ctxNewFile', 'ctxNewFolder', 'renameModal', 'renameInput', 'renameBtn', 'closeRenameModal', 'searchInput', 'newFileBtn', 'newFolderBtn', 'refreshBtn', 'sidebarOpenBtn', 'yamlBtn', 'yamlDropdown', 'tableModal', 'tableRows', 'tableCols', 'insertTableBtn', 'closeTableModal', 'wordCount'];
+                const ids = [
+                    'openFolderBtn', 'saveBtn', 'downloadBtn', 'fileTree', 'preview', 
+                    'docHeader', 'toolbar', 'themeToggle', 'spinner', 'tocList', 'mainLayout',
+                    'statusMsg', 'autoSaveToggle', 'modalOverlay', 'newItemModal', 'newItemName', 
+                    'createItemBtn', 'closeNewItemModal', 'modalTitle', 'ctxMenu', 'ctxDelete', 
+                    'ctxRename', 'ctxDuplicate', 'ctxNewFile', 'ctxNewFolder', 'renameModal', 'renameInput', 'renameBtn', 
+                    'closeRenameModal', 'searchInput', 'newFileBtn', 'newFolderBtn', 'refreshBtn',
+                    'sidebarOpenBtn', 'yamlBtn', 'yamlDropdown',
+                    'tableModal', 'tableRows', 'tableCols', 'insertTableBtn', 'closeTableModal', 'wordCount'
+                ];
                 ids.forEach(id => this.ui[id] = document.getElementById(id));
-                this.ui.resizer1 = document.getElementById('resizer1'); this.ui.resizer2 = document.getElementById('resizer2'); this.ui.resizer3 = document.getElementById('resizer3');
+                this.ui.resizer1 = document.getElementById('resizer1');
+                this.ui.resizer2 = document.getElementById('resizer2');
+                this.ui.resizer3 = document.getElementById('resizer3');
             },
+
             Core: {
-                loadSettings() { App.Utils.applyTheme(App.state.theme); App.ui.autoSaveToggle.checked = App.state.autoSave; App.Core.applyLayout(); },
-                applyLayout() { const w = App.state.columnWidths; App.ui.mainLayout.style.gridTemplateColumns = `${w[0]}px ${w[1]}px minmax(150px, ${w[2]}px) ${w[3]}px minmax(150px, ${w[4]}px) ${w[5]}px ${w[6]}px`; },
+                loadSettings() { 
+                    App.Utils.applyTheme(App.state.theme);
+                    App.ui.autoSaveToggle.checked = App.state.autoSave;
+                    App.Core.applyLayout();
+                },
+                applyLayout() {
+                    const w = App.state.columnWidths;
+                    App.ui.mainLayout.style.gridTemplateColumns = `${w[0]}px ${w[1]}px minmax(150px, ${w[2]}px) ${w[3]}px minmax(150px, ${w[4]}px) ${w[5]}px ${w[6]}px`;
+                },
                 bindEvents() {
                     const ui = App.ui;
-                    ui.openFolderBtn.onclick = App.FS.openDirectory; ui.sidebarOpenBtn.onclick = App.FS.openDirectory;
-                    ui.saveBtn.onclick = () => App.FS.saveFileToDisk(); ui.downloadBtn.onclick = App.FS.downloadAsFile;
-                    ui.refreshBtn.onclick = () => App.FS.refreshTree();
-                    ui.searchInput.oninput = (e) => App.Sidebar.filter(e.target.value);
-                    ui.autoSaveToggle.onchange = (e) => { App.state.autoSave = e.target.checked; localStorage.setItem('autoSave', App.state.autoSave); };
+                    ui.openFolderBtn.addEventListener('click', App.FS.openDirectory);
+                    ui.sidebarOpenBtn.addEventListener('click', App.FS.openDirectory);
+                    ui.saveBtn.addEventListener('click', () => App.FS.saveFileToDisk());
+                    ui.downloadBtn.addEventListener('click', App.FS.downloadAsFile);
+                    ui.refreshBtn.addEventListener('click', () => App.FS.refreshTree());
+                    ui.searchInput.addEventListener('input', (e) => App.Sidebar.filter(e.target.value));
+
+                    ui.autoSaveToggle.addEventListener('change', (e) => {
+                        App.state.autoSave = e.target.checked;
+                        localStorage.setItem('autoSave', App.state.autoSave);
+                    });
+
+                    ui.newFileBtn.addEventListener('click', () => App.FS.openCreateModal('file'));
+                    ui.newFolderBtn.addEventListener('click', () => { App.FS.openCreateModal('folder'); });
+                    
                     ui.newFileBtn.onclick = () => App.FS.openCreateModal('file');
-                    ui.newFolderBtn.onclick = () => App.FS.openCreateModal('folder');
-                    ui.createItemBtn.onclick = App.FS.createItem;
+                    
+                    ui.createItemBtn.addEventListener('click', App.FS.createItem);
 
-                    ui.toolbar.onclick = App.Editor.handleToolbar;
-                    ui.yamlBtn.onclick = (e) => { e.stopPropagation(); ui.yamlDropdown.classList.toggle('show'); };
-                    ui.yamlDropdown.onclick = (e) => {
+                    const debouncedRender = App.Utils.debounce((val) => {
+                        App.Preview.render(val);
+                        App.Editor.updateStats(val);
+                    }, 300);
+
+                    const debouncedSave = App.Utils.debounce(() => {
+                        if(App.state.autoSave && App.state.currentHandle && App.state.isDirty) App.FS.saveFileToDisk(true);
+                    }, 2000);
+
+                    // Note: Input handling moved to CodeMirror event
+
+                    ui.preview.addEventListener('scroll', () => { App.Utils.syncScroll('preview'); App.TOC.highlight(); });
+
+                    ui.toolbar.addEventListener('click', App.Editor.handleToolbar);
+                    
+                    // YAML Dropdown Logic
+                    ui.yamlBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        ui.yamlDropdown.classList.toggle('show');
+                    });
+                    ui.yamlDropdown.addEventListener('click', (e) => {
                         const item = e.target.closest('.dropdown-item');
-                        if (item) { App.Editor.insertTemplate(item.dataset.template); ui.yamlDropdown.classList.remove('show'); }
-                    };
-                    document.onclick = () => { ui.yamlDropdown.classList.remove('show'); ui.ctxMenu.style.display = 'none'; };
-                    ui.themeToggle.onclick = App.Utils.toggleTheme;
-                    
-                    const closeModals = App.Utils.closeModals;
-                    ui.closeNewItemModal.onclick = closeModals; ui.closeRenameModal.onclick = closeModals; ui.closeTableModal.onclick = closeModals;
-                    ui.modalOverlay.onclick = (e) => { if (e.target === ui.modalOverlay) closeModals(); };
-                    
-                    ui.renameBtn.onclick = App.FS.renameItem; ui.insertTableBtn.onclick = App.Tools.insertTable;
-                    ui.ctxDelete.onclick = App.FS.deleteItem; ui.ctxRename.onclick = App.FS.openRenameModal; ui.ctxDuplicate.onclick = App.FS.duplicateItem;
-                    ui.ctxNewFile.onclick = () => App.FS.openCreateModal('file'); ui.ctxNewFolder.onclick = () => App.FS.openCreateModal('folder');
-
-                    document.onkeydown = e => { if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); App.FS.saveFileToDisk(); } };
-
-                    ui.fileTree.onclick = (e) => {
-                        const item = e.target.closest('.tree-item'); if (!item) return; e.stopPropagation();
-                        if (item.dataset.kind === 'directory') { App.state.activeFolderHandle = item._handle; App.FS.tryLoadIndexFile(item._handle); }
-                        else { App.state.activeFolderHandle = item._parent; App.FS.loadFile(item._handle); }
-                        ui.fileTree.querySelectorAll('.tree-item').forEach(el => el.classList.remove('active')); item.classList.add('active');
-                    };
-                    ui.fileTree.oncontextmenu = (e) => {
-                        const item = e.target.closest('.tree-item'); if (!item) return; e.preventDefault(); e.stopPropagation();
-                        App.state.contextTarget = { handle: item._handle, parent: item._parent, kind: item.dataset.kind };
-                        if (item.dataset.kind === 'directory') App.state.activeFolderHandle = item._handle; else App.state.activeFolderHandle = item._parent;
-                        ui.ctxMenu.style.display = 'block'; ui.ctxMenu.style.left = `${e.pageX}px`; ui.ctxMenu.style.top = `${e.pageY}px`;
-                    };
-                    // Drag logic kept same as previous...
-                    ui.fileTree.ondragstart = (e) => { const item = e.target.closest('.tree-item'); if (!item) return; App.state.dragSource = { handle: item._handle, parent: item._parent }; e.dataTransfer.effectAllowed = 'move'; };
-                    ui.fileTree.ondragover = (e) => { e.preventDefault(); e.stopPropagation(); const item = e.target.closest('.tree-item'); if (item && item.dataset.kind === 'directory') item.classList.add('drag-over'); else if (App.state.rootHandle) ui.fileTree.classList.add('drag-over'); };
-                    ui.fileTree.ondragleave = (e) => { const item = e.target.closest('.tree-item'); if (item) item.classList.remove('drag-over'); else ui.fileTree.classList.remove('drag-over'); };
-                    ui.fileTree.ondrop = async (e) => { e.preventDefault(); e.stopPropagation(); ui.fileTree.classList.remove('drag-over'); document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over')); const targetItem = e.target.closest('.tree-item'); let destDir = (targetItem && targetItem.dataset.kind === 'directory') ? targetItem._handle : App.state.rootHandle; if (App.state.dragSource && destDir) await App.FS.transferEntry(App.state.dragSource, destDir, null, true); };
-                    
-                    ui.preview.onclick = async (e) => {
-                        const card = e.target.closest('.index-card');
-                        if (card && card.dataset.name && App.state.activeFolderHandle) {
-                            try { const fh = await App.state.activeFolderHandle.getFileHandle(card.dataset.name); App.FS.loadFile(fh); } catch (err) {}
+                        if(item) {
+                            const type = item.dataset.template;
+                            App.Editor.insertTemplate(type);
+                            ui.yamlDropdown.classList.remove('show');
                         }
-                    };
-                    ui.resizer1.onmousedown = e => App.Editor.startResize(e, 0); ui.resizer2.onmousedown = e => App.Editor.startResize(e, 2); ui.resizer3.onmousedown = e => App.Editor.startResize(e, 4);
-                    document.querySelectorAll('.modal input').forEach(inp => { inp.onkeydown = e => { if (e.key === 'Enter') inp.closest('.modal').querySelector('.btn.primary').click(); }; });
+                    });
+                    document.addEventListener('click', () => {
+                        ui.yamlDropdown.classList.remove('show');
+                        ui.ctxMenu.style.display = 'none';
+                    });
+
+                    ui.themeToggle.addEventListener('click', App.Utils.toggleTheme);
+                    
+                    ui.closeNewItemModal.addEventListener('click', App.Utils.closeModals);
+                    ui.closeRenameModal.addEventListener('click', App.Utils.closeModals);
+                    ui.closeTableModal.addEventListener('click', App.Utils.closeModals);
+                    ui.modalOverlay.addEventListener('click', (e) => { if(e.target === ui.modalOverlay) App.Utils.closeModals(); });
+                    
+                    ui.renameBtn.addEventListener('click', App.FS.renameItem);
+                    ui.insertTableBtn.addEventListener('click', App.Tools.insertTable);
+                    
+                    ui.ctxDelete.addEventListener('click', App.FS.deleteItem);
+                    ui.ctxRename.addEventListener('click', App.FS.openRenameModal);
+                    ui.ctxDuplicate.addEventListener('click', App.FS.duplicateItem);
+                    ui.ctxNewFile.addEventListener('click', () => App.FS.openCreateModal('file'));
+                    ui.ctxNewFolder.addEventListener('click', () => App.FS.openCreateModal('folder'));
+
+                    document.addEventListener('click', () => ui.ctxMenu.style.display = 'none');
+                    document.addEventListener('keydown', e => {
+                        if((e.ctrlKey||e.metaKey) && e.key === 's') { e.preventDefault(); App.FS.saveFileToDisk(); }
+                    });
+                    
+                    // Event Delegation for Tree
+                    ui.fileTree.addEventListener('click', (e) => {
+                        const item = e.target.closest('.tree-item');
+                        if (!item) return;
+                        e.stopPropagation();
+                        if (item.dataset.kind === 'directory') {
+                            App.state.activeFolderHandle = item._handle;
+                            App.FS.tryLoadIndexFile(item._handle);
+                        } else {
+                            App.state.activeFolderHandle = item._parent;
+                            App.FS.loadFile(item._handle);
+                        }
+                        ui.fileTree.querySelectorAll('.tree-item').forEach(el => el.classList.remove('active'));
+                        item.classList.add('active');
+                    });
+
+                    ui.fileTree.addEventListener('contextmenu', (e) => {
+                        const item = e.target.closest('.tree-item');
+                        if (!item) return;
+                        e.preventDefault(); e.stopPropagation();
+                        App.state.contextTarget = { handle: item._handle, parent: item._parent, kind: item.dataset.kind };
+                        if (item.dataset.kind === 'directory') App.state.activeFolderHandle = item._handle;
+                        else App.state.activeFolderHandle = item._parent;
+                        ui.ctxMenu.style.display = 'block';
+                        ui.ctxMenu.style.left = `${e.pageX}px`; ui.ctxMenu.style.top = `${e.pageY}px`;
+                    });
+
+                    // Drag & Drop Delegation
+                    ui.fileTree.addEventListener('dragstart', (e) => {
+                        const item = e.target.closest('.tree-item');
+                        if (!item) return;
+                        App.state.dragSource = { handle: item._handle, parent: item._parent };
+                        e.dataTransfer.effectAllowed = 'move';
+                    });
+                    ui.fileTree.addEventListener('dragover', (e) => {
+                        e.preventDefault(); e.stopPropagation();
+                        const item = e.target.closest('.tree-item');
+                        if (item && item.dataset.kind === 'directory') item.classList.add('drag-over');
+                        else if (App.state.rootHandle) ui.fileTree.classList.add('drag-over');
+                    });
+                    ui.fileTree.addEventListener('dragleave', (e) => {
+                        const item = e.target.closest('.tree-item');
+                        if (item) item.classList.remove('drag-over');
+                        else ui.fileTree.classList.remove('drag-over');
+                    });
+                    ui.fileTree.addEventListener('drop', async (e) => {
+                        e.preventDefault(); e.stopPropagation();
+                        ui.fileTree.classList.remove('drag-over');
+                        document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+                        const targetItem = e.target.closest('.tree-item');
+                        let destDir = (targetItem && targetItem.dataset.kind === 'directory') ? targetItem._handle : App.state.rootHandle;
+                        if (App.state.dragSource && destDir) await App.FS.transferEntry(App.state.dragSource, destDir, null, true);
+                    });
+                    
+                    // Preview Index Card Click Delegation
+                    ui.preview.addEventListener('click', async (e) => {
+                        const card = e.target.closest('.index-card');
+                        if (card && card.dataset.name) {
+                            const fileName = card.dataset.name;
+                            const folder = App.state.activeFolderHandle;
+                            if (folder) {
+                                try {
+                                    const fileHandle = await folder.getFileHandle(fileName);
+                                    App.FS.loadFile(fileHandle);
+                                    const items = ui.fileTree.querySelectorAll('.tree-item');
+                                    items.forEach(it => {
+                                        if (it._handle && it._handle.name === fileName) {
+                                            items.forEach(el => el.classList.remove('active'));
+                                            it.classList.add('active');
+                                            it.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                                        }
+                                    });
+                                } catch (err) { console.error('Card click error:', err); }
+                            }
+                        }
+                    });
+
+                    // Resizers
+                    ui.resizer1.addEventListener('mousedown', e => App.Editor.startResize(e, 0));
+                    ui.resizer2.addEventListener('mousedown', e => App.Editor.startResize(e, 2));
+                    ui.resizer3.addEventListener('mousedown', e => App.Editor.startResize(e, 4));
+
+                    document.querySelectorAll('.modal input').forEach(input => {
+                        input.addEventListener('keydown', e => {
+                            if(e.key === 'Enter') {
+                                const modal = input.closest('.modal');
+                                const confirmBtn = modal.querySelector('.btn.primary');
+                                if(confirmBtn) confirmBtn.click();
+                            }
+                        });
+                    });
                 },
                 initResizers() {
                     const setup = (id, colIdx) => {
-                        const resizer = document.getElementById(id); let startX, startWidths;
-                        const move = (e) => { const delta = e.clientX - startX; const newW = Math.max(50, startWidths[colIdx] + delta); App.state.columnWidths[colIdx] = newW; App.Core.applyLayout(); };
-                        const up = () => { resizer.classList.remove('dragging'); localStorage.setItem('split-pos', JSON.stringify(App.state.columnWidths)); document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); };
-                        resizer.onmousedown = (e) => { startX = e.clientX; startWidths = [...App.state.columnWidths]; resizer.classList.add('dragging'); document.addEventListener('mousemove', move); document.addEventListener('mouseup', up); };
+                        const resizer = document.getElementById(id);
+                        let startX, startWidths;
+                        const onMouseMove = (e) => {
+                            const delta = e.clientX - startX;
+                            const newWidth = Math.max(50, startWidths[colIdx] + delta);
+                            App.state.columnWidths[colIdx] = newWidth;
+                            App.Core.applyLayout();
+                        };
+                        const onMouseUp = () => {
+                            resizer.classList.remove('dragging');
+                            localStorage.setItem('split-pos', JSON.stringify(App.state.columnWidths));
+                            document.removeEventListener('mousemove', onMouseMove);
+                            document.removeEventListener('mouseup', onMouseUp);
+                        };
+                        resizer.addEventListener('mousedown', (e) => {
+                            startX = e.clientX;
+                            startWidths = [...App.state.columnWidths];
+                            resizer.classList.add('dragging');
+                            document.addEventListener('mousemove', onMouseMove);
+                            document.addEventListener('mouseup', onMouseUp);
+                        });
                     };
                     setup('resizer1', 0); setup('resizer2', 2); setup('resizer3', 4);
                 }
             },
+
             FS: {
-                async openDirectory() { try { App.state.rootHandle = await window.showDirectoryPicker(); App.state.activeFolderHandle = App.state.rootHandle; await App.FS.refreshTree(); await App.Indexer.rebuild(App.state.rootHandle); } catch (e) {} },
-                async refreshTree() { if (!App.state.rootHandle) return; App.ui.fileTree.innerHTML = ''; App.ui.fileTree.appendChild(await App.FS.buildTree(App.state.rootHandle)); App.Indexer.rebuild(App.state.rootHandle); },
-                async buildTree(dir, parent = null, level = 0) {
-                    const ul = document.createElement('div'); const entries = []; for await (const e of dir.values()) entries.push(e);
+                async openDirectory() {
+                    try {
+                        App.state.rootHandle = await window.showDirectoryPicker();
+                        App.state.activeFolderHandle = App.state.rootHandle;
+                        await App.FS.refreshTree();
+                    } catch (err) { if(err.name !== 'AbortError') alert('폴더 접근 권한이 필요합니다.'); }
+                },
+                async refreshTree() {
+                    if (!App.state.rootHandle) return;
+                    App.ui.fileTree.innerHTML = '';
+                    const tree = await App.FS.buildTree(App.state.rootHandle);
+                    App.ui.fileTree.appendChild(tree);
+                },
+                async buildTree(dirHandle, parentHandle = null, level = 0) {
+                    const ul = document.createElement('div');
+                    const entries = [];
+                    for await (const entry of dirHandle.values()) entries.push(entry);
                     entries.sort((a, b) => (a.kind === b.kind ? 0 : a.kind === 'directory' ? -1 : 1) || a.name.localeCompare(b.name));
-                    for (const e of entries) {
-                        const div = document.createElement('div'); div.className = 'tree-item'; div.style.paddingLeft = `${level * 15 + 12}px`;
-                        div.innerHTML = `<span>${e.kind === 'directory' ? '📂' : (e.name.endsWith('.json') ? '⚙️' : '📄')}</span> ${e.name}`;
-                        div.dataset.kind = e.kind; div._handle = e; div._parent = dir; div.setAttribute('draggable', 'true');
-                        ul.appendChild(div); if (e.kind === 'directory') ul.appendChild(await App.FS.buildTree(e, dir, level + 1));
+
+                    for (const entry of entries) {
+                        const div = document.createElement('div');
+                        div.className = 'tree-item';
+                        div.style.paddingLeft = `${level * 15 + 12}px`;
+                        div.innerHTML = `<span>${entry.kind==='directory'?'📂':(entry.name.endsWith('.json')?'⚙️':'📄')}</span> ${entry.name}`;
+                        div.dataset.kind = entry.kind;
+                        div._handle = entry; div._parent = dirHandle;
+                        div.setAttribute('draggable', 'true');
+                        ul.appendChild(div);
+                        if (entry.kind === 'directory') ul.appendChild(await App.FS.buildTree(entry, dirHandle, level + 1));
                     }
                     return ul;
                 },
-                async loadFile(handle) {
-                    try { App.state.currentHandle = handle; const f = await handle.getFile(); const txt = await f.text(); App.state.editor.setValue(txt); App.state.editor.clearHistory(); App.state.isDirty = false; App.Utils.updateSaveBtnState(); App.Utils.showStatus('로드됨'); } catch (e) { console.error(e); }
+                async loadFile(fileHandle) {
+                    try {
+                        App.state.currentHandle = fileHandle;
+                        const file = await fileHandle.getFile();
+                        const text = await file.text();
+                        App.state.editor.setValue(text); // Set CM value
+                        App.state.editor.clearHistory();
+                        App.state.isDirty = false;
+                        App.Utils.updateSaveBtnState();
+                        App.Utils.showStatus('로드됨');
+                        // Preview update handled by change event
+                    } catch(e) { console.error(e); }
                 },
-                async tryLoadIndexFile(dir) {
-                    let target = null; for await (const [n, h] of dir.entries()) { if (h.kind === 'file') { if (n.toLowerCase() === 'index.md') { target = h; break; } if (!target && n.endsWith('.json')) target = h; } }
-                    if (target) await this.loadFile(target); else { App.state.currentHandle = null; App.state.editor.setValue(""); App.Preview.render(""); }
+                async tryLoadIndexFile(dirHandle) {
+                    let target = null;
+                    for await (const [name, handle] of dirHandle.entries()) {
+                        if (handle.kind === 'file') {
+                            if (name.toLowerCase() === 'index.md') { target = handle; break; }
+                            if (!target && name.endsWith('.json')) target = handle;
+                        }
+                    }
+                    if(target) await this.loadFile(target);
+                    else {
+                        App.state.currentHandle = null;
+                        App.state.editor.setValue("");
+                        App.Preview.render("");
+                    }
                 },
                 async saveFileToDisk(silent = false) {
-                    if (!App.state.rootHandle) return !silent && alert('폴더를 열어주세요.');
-                    if (!App.state.currentHandle || App.state.currentHandle.kind === 'virtual') {
-                        try {
-                            const dir = App.state.activeFolderHandle || App.state.rootHandle;
-                            const name = await App.FS.getUniqueName(dir, 'untitled.md');
-                            const handle = await dir.getFileHandle(name, { create: true });
-                            App.state.currentHandle = handle; App.ui.docHeader.innerText = name; await App.FS.refreshTree();
-                        } catch (e) { if (!silent) alert('저장 취소'); return; }
+                    // 1. Check Root Access
+                    if (!App.state.rootHandle) {
+                        if(!silent) alert('프로젝트 폴더를 먼저 열어주세요.');
+                        return;
                     }
+                    // 2. Handle Untitled
+                    if (!App.state.currentHandle || App.state.currentHandle.kind === 'virtual') {
+                        // Use showSaveFilePicker for untitled files
+                        try {
+                            const opts = { suggestedName: 'untitled.md', types: [{ description: 'Markdown File', accept: {'text/markdown': ['.md']} }] };
+                            const handle = await window.showSaveFilePicker(opts);
+                            App.state.currentHandle = handle;
+                            
+                            App.ui.docHeader.innerText = handle.name; 
+                            await App.FS.refreshTree(); 
+                            
+                            // Proceed to save
+                        } catch (err) {
+                            if(err.name !== 'AbortError') alert('저장이 취소되었습니다.');
+                            return;
+                        }
+                    }
+                    // 3. Write
                     try {
-                        if (!silent || App.state.autoSave) App.Utils.showStatus('저장 중...');
-                        const w = await App.state.currentHandle.createWritable(); await w.write(App.state.editor.getValue()); await w.close();
-                        App.state.isDirty = false; App.Utils.updateSaveBtnState(); App.Utils.showStatus('저장됨'); App.Preview.render(App.state.editor.getValue());
-                    } catch (e) { App.Utils.showStatus('저장 실패'); if (!silent) alert(e.message); }
+                        if(!silent || App.state.autoSave) App.Utils.showStatus('저장 중...');
+                        const writable = await App.state.currentHandle.createWritable();
+                        await writable.write(App.state.editor.getValue()); // Write CM value
+                        await writable.close();
+                        App.state.isDirty = false;
+                        App.Utils.updateSaveBtnState();
+                        App.Utils.showStatus('저장됨');
+                        App.Preview.render(App.state.editor.getValue()); // Re-render to update title
+                    } catch (err) { App.Utils.showStatus('저장 실패 (권한?)'); if(!silent) alert(err.message); }
                 },
-                async getUniqueName(dir, base) {
-                    let name = base, count = 1; const extIdx = base.lastIndexOf('.'); const namePart = extIdx !== -1 ? base.substring(0, extIdx) : base; const extPart = extIdx !== -1 ? base.substring(extIdx) : '';
-                    while (true) { try { await dir.getFileHandle(name); name = `${namePart} (${count})${extPart}`; count++; } catch (e) { if (e.name === 'NotFoundError') return name; throw e; } }
+                async getUniqueName(dirHandle, baseName) {
+                    let name = baseName;
+                    let count = 1;
+                    const extIndex = baseName.lastIndexOf('.');
+                    const namePart = extIndex !== -1 ? baseName.substring(0, extIndex) : baseName;
+                    const extPart = extIndex !== -1 ? baseName.substring(extIndex) : '';
+                    while (true) {
+                        try {
+                            await dirHandle.getFileHandle(name);
+                            name = `${namePart} (${count})${extPart}`;
+                            count++;
+                        } catch (err) {
+                            if (err.name === 'NotFoundError') return name;
+                            throw err;
+                        }
+                    }
                 },
-                downloadAsFile() { const b = new Blob([App.state.editor.getValue()], { type: 'text/plain' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = App.state.currentHandle ? App.state.currentHandle.name : 'doc.md'; a.click(); },
-                openCreateModal(type) { if (!App.state.rootHandle) return alert('폴더를 열어주세요.'); App.state.createType = type; App.ui.modalTitle.innerText = type === 'file' ? '새 파일' : '새 폴더'; App.Utils.openModal('newItemModal'); App.ui.newItemName.value = ''; App.ui.newItemName.focus(); },
+                downloadAsFile() {
+                    const blob = new Blob([App.state.editor.getValue()], { type: 'text/plain;charset=utf-8' });
+                    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+                    a.download = App.state.currentHandle ? App.state.currentHandle.name : 'doc.md';
+                    a.click();
+                    URL.revokeObjectURL(a.href);
+                },
+                openCreateModal(type) {
+                    if(!App.state.rootHandle) return alert('폴더를 열어주세요.');
+                    App.state.createType = type;
+                    App.ui.modalTitle.innerText = type === 'file' ? '새 파일 생성' : '새 폴더 생성';
+                    App.Utils.openModal('newItemModal');
+                    App.ui.newItemName.value = ''; App.ui.newItemName.focus();
+                },
                 async createItem() {
-                    const name = App.ui.newItemName.value.trim(); if (!name) return;
+                    const name = App.ui.newItemName.value.trim();
+                    if(!name) return;
                     const dir = App.state.activeFolderHandle || App.state.rootHandle;
-                    try { if (App.state.createType === 'file') await dir.getFileHandle(name, { create: true }); else await dir.getDirectoryHandle(name, { create: true }); App.Utils.closeModals(); await App.FS.refreshTree(); } catch (e) { alert(e.message); }
+                    try {
+                        if(App.state.createType === 'file') await dir.getFileHandle(name, { create: true });
+                        else await dir.getDirectoryHandle(name, { create: true });
+                        App.Utils.closeModals(); await App.FS.refreshTree();
+                    } catch(e) { alert('생성 실패: ' + e.message); }
                 },
-                async deleteItem() { const t = App.state.contextTarget; if (!t || !confirm('삭제하시겠습니까?')) return; try { await t.parent.removeEntry(t.handle.name, { recursive: true }); if(App.state.currentHandle === t.handle) { App.state.editor.setValue(''); App.state.currentHandle = null; } await App.FS.refreshTree(); } catch (e) { alert('삭제 실패'); } },
-                openRenameModal() { if (!App.state.contextTarget) return; App.ui.renameInput.value = App.state.contextTarget.handle.name; App.Utils.openModal('renameModal'); App.ui.renameInput.focus(); },
-                async renameItem() { const n = App.ui.renameInput.value.trim(); const t = App.state.contextTarget; if (!n || !t) return App.Utils.closeModals(); await App.FS.transferEntry(t, t.parent, n, true); App.Utils.closeModals(); },
-                async duplicateItem() { const t = App.state.contextTarget; if (!t) return; const n = t.handle.name.replace(/(\.[^.]+)$/, '-copy$1') || t.handle.name + '-copy'; await App.FS.transferEntry(t, t.parent, n, false); },
-                async transferEntry(src, dest, name, isMove) {
+                async deleteItem() {
+                    const t = App.state.contextTarget;
+                    if(!t || !confirm(`'${t.handle.name}' 삭제하시겠습니까?`)) return;
+                    try { await t.parent.removeEntry(t.handle.name, { recursive: true }); await App.FS.refreshTree(); } catch(e) { alert('삭제 실패'); }
+                },
+                openRenameModal() {
+                    if(!App.state.contextTarget) return;
+                    App.ui.renameInput.value = App.state.contextTarget.handle.name;
+                    App.Utils.openModal('renameModal');
+                    App.ui.renameInput.focus();
+                },
+                async renameItem() {
+                    const newName = App.ui.renameInput.value.trim();
+                    const target = App.state.contextTarget;
+                    if(!newName || !target || newName === target.handle.name) return App.Utils.closeModals();
+                    await App.FS.transferEntry(target, target.parent, newName, true);
+                    App.Utils.closeModals();
+                },
+                async duplicateItem() {
+                    const target = App.state.contextTarget;
+                    if(!target) return;
+                    const nameParts = target.handle.name.split('.');
+                    const newName = nameParts.length > 1 
+                        ? `${nameParts.slice(0,-1).join('.')}-copy.${nameParts.slice(-1)}`
+                        : `${target.handle.name}-copy`;
+                    await App.FS.transferEntry(target, target.parent, newName, false);
+                },
+                async transferEntry(src, destDir, newName, isMove) {
                     App.Utils.toggleLoading(true);
                     try {
-                        const cp = async (s, d, n) => {
-                            if (s.kind === 'file') { const f = await s.getFile(); const nh = await d.getFileHandle(n, { create: true }); const w = await nh.createWritable(); await w.write(f); await w.close(); }
-                            else { const nd = await d.getDirectoryHandle(n, { create: true }); for await (const e of s.values()) await cp(e, nd, e.name); }
+                        const copyRecursive = async (srcH, dstH, targetName) => {
+                            if(srcH.kind === 'file') {
+                                const f = await srcH.getFile();
+                                const nf = await dstH.getFileHandle(targetName, { create: true });
+                                const w = await nf.createWritable();
+                                await w.write(f); await w.close();
+                            } else {
+                                const nd = await dstH.getDirectoryHandle(targetName, { create: true });
+                                for await (const e of srcH.values()) await copyRecursive(e, nd, e.name);
+                            }
                         };
-                        await cp(src.handle, dest, name || src.handle.name);
-                        if (isMove) await src.parent.removeEntry(src.handle.name, { recursive: true });
+                        await copyRecursive(src.handle, destDir, newName || src.handle.name);
+                        if(isMove) await src.parent.removeEntry(src.handle.name, { recursive: true });
                         await App.FS.refreshTree();
-                    } catch (e) { alert('오류'); } finally { App.Utils.toggleLoading(false); }
+                    } catch(e) { alert('작업 중 오류 발생'); } finally { App.Utils.toggleLoading(false); }
                 }
             },
 
             Editor: {
                 initCodeMirror() {
-                    const txt = document.getElementById('editor'); if (txt.style.display === 'none') return;
-                    App.state.editor = CodeMirror.fromTextArea(txt, { mode: 'markdown', theme: App.state.theme === 'dark' ? 'atom-one-dark' : 'default', lineNumbers: true, lineWrapping: true, autoCloseBrackets: true, styleActiveLine: true, extraKeys: { "[": App.Editor.handleLinkHint } });
-                    const dRender = App.Utils.debounce(v => { App.Preview.render(v); App.Editor.updateStats(v); }, 300);
-                    const dSave = App.Utils.debounce(() => { if (App.state.autoSave && App.state.currentHandle && App.state.isDirty) App.FS.saveFileToDisk(true); }, 2000);
-                    App.state.editor.on('change', cm => {
-                        App.state.isDirty = true;
-                        if (!App.state.currentHandle) { App.state.currentHandle = { name: 'untitled.md', kind: 'virtual' }; App.ui.docHeader.innerText = 'untitled.md (저장되지 않음)'; }
-                        App.Utils.updateSaveBtnState(); if (App.state.autoSave) App.Utils.showStatus('입력 중...');
-                        dRender(cm.getValue()); dSave();
+                    const textarea = document.getElementById('editor');
+                    if(textarea.style.display === 'none') return; // prevent re-init if already done
+                    
+                    App.state.editor = CodeMirror.fromTextArea(textarea, {
+                        mode: 'markdown',
+                        theme: App.state.theme === 'dark' ? 'atom-one-dark' : 'default',
+                        lineNumbers: true,
+                        lineWrapping: true,
+                        autoCloseBrackets: true,
+                        styleActiveLine: true,
+                        placeholder: '파일을 선택하거나 내용을 입력하세요...'
                     });
-                    App.state.editor.on('scroll', () => App.Utils.syncScroll('editor'));
+
+                    // CM Events
+                    const debouncedRender = App.Utils.debounce((val) => {
+                        App.Preview.render(val);
+                        App.Editor.updateStats(val);
+                    }, 300);
+
+                    const debouncedSave = App.Utils.debounce(() => {
+                        if(App.state.autoSave && App.state.currentHandle && App.state.isDirty) App.FS.saveFileToDisk(true);
+                    }, 2000);
+
+                    App.state.editor.on('change', (cm) => {
+                        App.state.isDirty = true;
+                        // Untitled logic
+                        if (!App.state.currentHandle) {
+                            App.state.currentHandle = { name: 'untitled.md', kind: 'virtual' };
+                            App.ui.docHeader.innerText = 'untitled.md (저장되지 않음)';
+                        }
+                        
+                        App.Utils.updateSaveBtnState();
+                        if(App.state.autoSave) App.Utils.showStatus('입력 중... (대기 저장)');
+                        debouncedRender(cm.getValue());
+                        debouncedSave();
+                    });
+
+                    App.state.editor.on('scroll', (cm) => {
+                        App.Utils.syncScroll('editor');
+                    });
                 },
                 handleToolbar(e) {
-                    const btn = e.target.closest('button'); if (!btn || !btn.dataset.cmd) return;
+                    const btn = e.target.closest('button'); if(!btn || !btn.dataset.cmd) return;
                     const cmd = btn.dataset.cmd;
-                    if (cmd === 'table') return App.Utils.openModal('tableModal');
-                    if (cmd === 'image') return App.Editor.insertText('![Alt Text](URL)', '');
-                    if (cmd === 'format') return App.Tools.formatDocument();
-                    if (cmd === 'frontmatter') return;
-                    const t = { bold: ['**', '**'], italic: ['*', '*'], strike: ['~~', '~~'], h2: ['## ', ''], h3: ['### ', ''], code: ['```\n', '\n```'], link: ['[', '](url)'], admonition: [':::tip\n', '\n:::'], tabs: ['<Tabs>\n  <TabItem value="1" label="Tab 1">Content</TabItem>\n</Tabs>', ''], details: ['<details>\n<summary>Title</summary>\nContent\n</details>', ''], task: ['- [ ] ', ''], quote: ['> ', ''], hr: ['---\n', ''], inline: ['`', '`'] }[cmd];
-                    if (t) App.Editor.insertText(t[0], t[1]);
+                    if(cmd === 'table') return App.Utils.openModal('tableModal');
+                    if(cmd === 'image') return App.Editor.insertText('![Alt Text](URL)', ''); 
+                    if(cmd === 'format') return App.Tools.formatDocument(); 
+                    if(cmd === 'frontmatter') return;
+
+                    const t = { 
+                        bold:['**','**'], italic:['*','*'], strike:['~~','~~'], h2:['## ',''], h3:['### ',''], 
+                        code:['```\n','\n```'], link:['[','](url)'], admonition:[':::tip\n','\n:::'], 
+                        tabs:['<Tabs>\n  <TabItem value="1" label="Tab 1">Content</TabItem>\n</Tabs>',''], 
+                        details:['<details>\n<summary>Title</summary>\nContent\n</details>',''], 
+                        task:['- [ ] ',''], quote:['> ',''], hr:['---\n',''], inline:['`','`']
+                    }[cmd];
+                    
+                    if(t) App.Editor.insertText(t[0], t[1]);
                 },
-                insertText(pre, post) { const doc = App.state.editor.getDoc(); const cur = doc.getCursor(); const sel = doc.getSelection(); doc.replaceSelection(pre + sel + post); if (post) doc.setCursor({ line: cur.line, ch: cur.ch + pre.length + sel.length }); App.state.editor.focus(); },
-                insertTemplate(t) { const T = { generic: '---\nid: doc\ntitle: Title\n---\n\n', doc: '---\nid: doc\ntitle: Title\nsidebar_position: 1\n---\n\n', blog: '---\ntitle: Blog\ndate: 2024-01-01\n---\n\n', category: '{\n  "label": "Cat",\n  "position": 1,\n  "link": {\n    "type": "generated-index"\n  }\n}' }; App.state.editor.getDoc().replaceSelection(T[t] || ''); App.state.editor.focus(); },
-                updateStats(t) { App.ui.wordCount.innerText = `단어: ${t.trim().split(/\s+/).filter(x => x).length}`; },
-                handleLinkHint(cm) { cm.replaceSelection("["); CodeMirror.showHint(cm, App.Indexer.hintFunc, { completeSingle: false }); },
-                startResize(e, i) { /* handled via initResizers */ }
+                insertText(pre, post) {
+                    const doc = App.state.editor.getDoc();
+                    const cursor = doc.getCursor();
+                    const selection = doc.getSelection();
+                    doc.replaceSelection(pre + selection + post);
+                    if(post) {
+                        const newPos = { line: cursor.line, ch: cursor.ch + pre.length + selection.length };
+                        doc.setCursor(newPos); 
+                    }
+                    App.state.editor.focus();
+                },
+                insertTemplate(type) {
+                    const templates = {
+                        generic: '---\nid: doc-id\ntitle: Title\n---\n\n',
+                        doc: '---\nid: doc-id\ntitle: Title\nsidebar_position: 1\ndescription: Document description\n---\n\n',
+                        blog: '---\ntitle: Blog Post Title\nauthors: [name]\ntags: [tag1, tag2]\ndate: 2024-01-01\n---\n\n',
+                        category: '{\n  "label": "Category Name",\n  "position": 1,\n  "link": {\n    "type": "generated-index",\n    "description": "Category Description"\n  }\n}'
+                    };
+                    const text = templates[type] || '';
+                    const doc = App.state.editor.getDoc();
+                    doc.replaceSelection(text);
+                    App.state.editor.focus();
+                },
+                updateStats(text) {
+                    const words = text.trim().split(/\s+/).filter(x=>x).length;
+                    App.ui.wordCount.innerText = `단어: ${words}`;
+                },
+                handleLinkHint(cm) {
+                    // Trigger Hint
+                    cm.replaceSelection("[");
+                    CodeMirror.showHint(cm, App.Indexer.hintFunc, { completeSingle: false });
+                },
+                startResize(e, colIdx) { /* handled via Core */ }
             },
 
             Indexer: {
                 index: [],
-                async rebuild(root) { this.index = []; if (root) await this.scan(root, ''); },
-                async scan(dir, path) { for await (const e of dir.values()) { if (e.kind === 'file' && e.name.endsWith('.md')) this.index.push({ name: e.name, path: path + '/' + e.name }); else if (e.kind === 'directory') await this.scan(e, path + '/' + e.name); } },
-                hintFunc(cm) { const cur = cm.getCursor(); const tok = cm.getTokenAt(cur); const list = App.Indexer.index.filter(i => i.name.toLowerCase().includes(tok.string.toLowerCase())); return { list: list.map(i => ({ text: `[${i.name}](${i.path})`, displayText: i.name })), from: CodeMirror.Pos(cur.line, tok.start), to: CodeMirror.Pos(cur.line, tok.end) }; },
-                init() {}
+                async rebuild(root) {
+                    this.index = [];
+                    if(root) await this.scan(root, '');
+                },
+                async scan(dir, path) {
+                    for await (const entry of dir.values()) {
+                        if (entry.kind === 'file' && entry.name.endsWith('.md')) {
+                            this.index.push({ name: entry.name, path: path + '/' + entry.name });
+                        } else if (entry.kind === 'directory') {
+                            await this.scan(entry, path + '/' + entry.name);
+                        }
+                    }
+                },
+                hintFunc(cm) {
+                    const cur = cm.getCursor();
+                    const token = cm.getTokenAt(cur);
+                    const list = App.Indexer.index.filter(i => i.name.toLowerCase().includes(token.string.toLowerCase()));
+                    
+                    return {
+                        list: list.map(i => ({ 
+                            text: `[${i.name}](${i.path})`, 
+                            displayText: i.name 
+                        })),
+                        from: CodeMirror.Pos(cur.line, token.start),
+                        to: CodeMirror.Pos(cur.line, token.end)
+                    };
+                },
+                init() {
+                    // Optional init
+                }
             },
 
             Tools: {
-                insertTable() { const r = parseInt(document.getElementById('tableRows').value) || 3, c = parseInt(document.getElementById('tableCols').value) || 3; let t = '\n| ' + Array(c).fill('Head').join(' | ') + ' |\n| ' + Array(c).fill('---').join(' | ') + ' |\n'; for (let i = 0; i < r; i++) t += '| ' + Array(c).fill('Cell').join(' | ') + ' |\n'; App.Editor.insertText(t, ''); App.Utils.closeModals(); },
-                formatDocument() { if (typeof prettier === 'undefined') return alert('Loading...'); try { const f = prettier.format(App.state.editor.getValue(), { parser: "markdown", plugins: prettierPlugins, printWidth: 80, proseWrap: "preserve" }); if (App.state.editor.getValue() !== f) App.state.editor.setValue(f); } catch (e) {} }
+                insertTable() {
+                    const r = parseInt(document.getElementById('tableRows').value)||3, c = parseInt(document.getElementById('tableCols').value)||3;
+                    let txt = '\n| ' + Array(c).fill('Head').join(' | ') + ' |\n| ' + Array(c).fill('---').join(' | ') + ' |\n';
+                    for(let i=0; i<r; i++) txt += '| ' + Array(c).fill('Cell').join(' | ') + ' |\n';
+                    App.Editor.insertText(txt, '');
+                    App.Utils.closeModals();
+                },
+                formatDocument() {
+                    if (typeof prettier === 'undefined') return alert('Prettier 로딩 중...');
+                    const editor = App.state.editor;
+                    try {
+                        const formatted = prettier.format(editor.getValue(), { parser: "markdown", plugins: prettierPlugins, printWidth: 80, proseWrap: "preserve" });
+                        if(editor.getValue() !== formatted) { editor.setValue(formatted); App.Utils.showStatus('포맷팅 완료'); }
+                    } catch (e) { alert("포맷팅 실패"); }
+                }
             },
 
             Preview: {
                 async render(text) {
                     const isJson = App.state.currentHandle?.name.endsWith('.json');
                     if (isJson) {
+                        App.ui.docHeader.innerText = App.state.currentHandle.name;
+                        App.ui.tocList.innerHTML = '';
                         try {
                             const data = JSON.parse(text);
+                            // Docusaurus Index Style
                             if (data.label || data.link) {
-                                let html = `<div class="category-page-header"><h1 class="cat-title">${App.Utils.escapeHtml(data.label || 'Category')}</h1>`;
+                                let html = `<div class="category-page-header">
+                                    <h1 class="cat-title">${App.Utils.escapeHtml(data.label || 'Category')}</h1>`;
                                 if (data.link?.description) html += `<p class="cat-desc">${App.Utils.escapeHtml(data.link.description)}</p>`;
                                 html += `</div><div class="index-grid">`;
+                                
                                 const cards = [];
-                                if (App.state.activeFolderHandle) {
-                                    for await (const entry of App.state.activeFolderHandle.values()) {
-                                        if (entry.kind === 'file' && entry.name.endsWith('.md')) {
-                                            const f = await entry.getFile(); const c = await f.text(); const m = App.Utils.parseFM(c);
-                                            if (m.draft !== true) cards.push({ title: m.title || entry.name, pos: m.sidebar_position || 999, desc: m.description || App.Utils.extractSummary(m.body), handle: entry });
+                                const folderHandle = App.state.activeFolderHandle;
+                                if (folderHandle) {
+                                    for await (const entry of folderHandle.values()) {
+                                        if (entry.kind === 'file' && (entry.name.endsWith('.md') || entry.name.endsWith('.mdx'))) {
+                                            const file = await entry.getFile();
+                                            const content = await file.text();
+                                            const meta = App.Utils.parseFM(content);
+                                            // Exclude drafts
+                                            if (meta.draft === true) continue;
+                                            
+                                            cards.push({ 
+                                                handle: entry, 
+                                                title: meta.title || entry.name, 
+                                                pos: meta.sidebar_position || 999, 
+                                                desc: meta.description || App.Utils.extractSummary(meta.body) 
+                                            });
                                         }
                                     }
                                 }
                                 cards.sort((a, b) => a.pos - b.pos);
-                                cards.forEach(c => html += `<div class="index-card" data-name="${App.Utils.escapeHtml(c.handle.name)}"><div class="index-card-title">📄 ${App.Utils.escapeHtml(c.title)}</div><div class="index-card-desc">${App.Utils.escapeHtml(c.desc)}</div></div>`);
-                                html += `</div>`;
+                                cards.forEach(c => {
+                                    html += `<div class="index-card" data-name="${App.Utils.escapeHtml(c.handle.name)}">
+                                        <div class="index-card-title">📄 ${App.Utils.escapeHtml(c.title)}</div>
+                                        <div class="index-card-desc">${App.Utils.escapeHtml(c.desc)}</div>
+                                    </div>`;
+                                });
+                                html += `</div><div style="margin-top:60px; border-top:1px dashed var(--border); padding-top:20px;"><details><summary style="font-size:0.85rem; color:var(--text-sub)">설정 원본(JSON) 보기</summary><pre><code class="language-json">${App.Utils.escapeHtml(text)}</code></pre></details></div>`;
                                 App.ui.preview.innerHTML = html;
-                            } else App.ui.preview.innerHTML = `<pre><code class="language-json">${App.Utils.escapeHtml(text)}</code></pre>`;
-                        } catch (e) { App.ui.preview.innerHTML = `<div class="admonition danger">JSON Error</div>`; }
+                            } else {
+                                App.ui.preview.innerHTML = `<pre><code class="language-json">${App.Utils.escapeHtml(text)}</code></pre>`;
+                            }
+                        } catch(e) { App.ui.preview.innerHTML = `<div class="admonition danger">JSON Syntax Error: ${e.message}</div>`; }
                     } else {
                         const { title, body } = App.Utils.parseFM(text);
-                        App.ui.docHeader.innerText = title || (App.state.currentHandle?.kind === 'virtual' ? 'untitled.md' : (App.state.currentHandle?.name || "Untitled"));
-                        let html = marked.parse(body); // breaks: false applied via setOptions
-                        html = html.replace(/<p>:::(note|tip|info|warning|danger)([\s\S]*?):::<\/p>/g, (m, t, c) => `<div class="admonition ${t}"><span class="admonition-title">${t}</span>${c}</div>`);
-                        App.ui.preview.innerHTML = DOMPurify.sanitize(html, { ADD_TAGS: ['tabs', 'tabitem', 'details', 'summary'], ADD_ATTR: ['label', 'value', 'data-name'] });
+                        App.ui.docHeader.innerText = title || (App.state.currentHandle?.kind === 'virtual' ? 'untitled.md (저장되지 않음)' : (App.state.currentHandle?.name || "Untitled"));
+                        // [FIXED] Force standard markdown line breaks (space-space-enter or double enter)
+                        let html = marked.parse(body, { breaks: false, gfm: true });
+                        html = html.replace(/<p>:::(note|tip|info|warning|danger)([\s\S]*?):::<\/p>/g, (m,t,c)=>`<div class="admonition ${t}"><span class="admonition-title">${t}</span>${c}</div>`);
+                        App.ui.preview.innerHTML = DOMPurify.sanitize(html, { ADD_TAGS:['tabs','tabitem','details','summary'], ADD_ATTR:['label','value', 'data-name'] });
                         App.Utils.transformTabs(); App.TOC.generate();
                     }
                     App.ui.preview.querySelectorAll('pre code').forEach(hljs.highlightElement);
@@ -540,42 +981,101 @@
             },
 
             TOC: {
-                generate() { const h = App.ui.preview.querySelectorAll('h2, h3'); App.ui.tocList.innerHTML = ''; h.forEach((el, i) => { el.id = `h-${i}`; const li = document.createElement('li'); li.innerHTML = `<a class="toc-link" href="#${el.id}">${el.innerText}</a>`; li.onclick = e => { e.preventDefault(); el.scrollIntoView({ behavior: 'smooth' }); }; App.ui.tocList.appendChild(li); }); },
-                highlight() { const pos = App.ui.preview.scrollTop + 80; let id = null; App.ui.preview.querySelectorAll('h2, h3').forEach(el => { if (el.offsetTop <= pos) id = el.id; }); App.ui.tocList.querySelectorAll('a').forEach(a => a.classList.toggle('active', a.getAttribute('href') === `#${id}`)); }
+                generate() {
+                    const h = App.ui.preview.querySelectorAll('h2, h3'); App.ui.tocList.innerHTML = '';
+                    h.forEach((el, i) => {
+                        el.id = `h-${i}`;
+                        const li = document.createElement('li');
+                        li.innerHTML = `<a class="toc-link" href="#${el.id}">${el.innerText}</a>`;
+                        li.onclick = (e) => { e.preventDefault(); el.scrollIntoView({behavior:'smooth'}); };
+                        App.ui.tocList.appendChild(li);
+                    });
+                },
+                highlight() {
+                    const pos = App.ui.preview.scrollTop + 80; let id = null;
+                    App.ui.preview.querySelectorAll('h2, h3').forEach(el => { if(el.offsetTop <= pos) id = el.id; });
+                    App.ui.tocList.querySelectorAll('a').forEach(a => a.classList.toggle('active', a.getAttribute('href') === `#${id}`));
+                }
             },
 
             Utils: {
-                applyTheme(t) { document.body.classList.toggle('dark-mode', t === 'dark'); App.ui.themeToggle.innerText = t === 'dark' ? '☀️' : '🌙'; if (App.state.editor) App.state.editor.setOption('theme', t === 'dark' ? 'atom-one-dark' : 'default'); },
-                toggleTheme() { App.state.theme = App.state.theme === 'dark' ? 'light' : 'dark'; localStorage.setItem('theme', App.state.theme); App.Utils.applyTheme(App.state.theme); },
-                debounce(f, d) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => f(...a), d); } },
+                applyTheme(t) { 
+                    document.body.classList.toggle('dark-mode', t === 'dark'); 
+                    App.ui.themeToggle.innerText = t==='dark'?'☀️':'🌙';
+                    if(App.state.editor) App.state.editor.setOption('theme', t === 'dark' ? 'atom-one-dark' : 'default');
+                },
+                toggleTheme() { App.state.theme = App.state.theme==='dark'?'light':'dark'; localStorage.setItem('theme', App.state.theme); App.Utils.applyTheme(App.state.theme); },
+                debounce(fn, d) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), d); } },
                 syncScroll(src) {
-                    if (!App.state.editor) return; const cm = App.state.editor; const i = cm.getScrollInfo(); const p = App.ui.preview;
-                    if (src === 'editor') p.scrollTop = (i.top / (i.height - i.clientHeight)) * (p.scrollHeight - p.clientHeight);
+                    const { editor, preview } = App.ui;
+                    if (!App.state.editor) return;
+                    const cm = App.state.editor;
+                    const info = cm.getScrollInfo();
+                    
+                    if(src === 'editor') {
+                        const r = info.top / (info.height - info.clientHeight);
+                        preview.scrollTop = r * (preview.scrollHeight - preview.clientHeight);
+                    } else {
+                        // Reverse sync skipped for simplicity with CM
+                    }
                 },
                 updateSaveBtnState() { App.ui.saveBtn.classList.toggle('dirty', App.state.isDirty); },
                 showStatus(m) { App.ui.statusMsg.innerText = m; },
+                
+                openModal(id) {
+                    App.ui.modalOverlay.style.display = 'flex';
+                    document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'));
+                    const target = document.getElementById(id);
+                    if(target) {
+                        target.classList.remove('hidden');
+                        const input = target.querySelector('input');
+                        if(input) input.focus();
+                    }
+                },
                 closeModals() { App.ui.modalOverlay.style.display = 'none'; document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden')); },
+                
                 toggleLoading(s) { App.ui.spinner.classList.toggle('hidden', !s); },
                 escapeHtml(s) { return s?.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); },
-                parseFM(t) { const m = t.match(/^\s*---\n([\s\S]+?)\n---/); let meta = {}, body = t; if (m) { try { meta = jsyaml.load(m[1]) || {}; } catch (e) {} body = t.replace(m[0], ''); } if (!meta.title) { const h1 = body.match(/^#\s+(.+)$/m); if (h1) meta.title = h1[1].trim(); } return { ...meta, body }; },
-                extractSummary(b) { const c = b.replace(/[#*`\[\]()!]/g, '').replace(/\n/g, ' ').trim(); return c.length > 100 ? c.substring(0, 100) + '...' : c || 'No description'; },
+                
+                parseFM(text) {
+                    const m = text.match(/^\s*---\n([\s\S]+?)\n---/);
+                    let meta = {}; 
+                    let body = text;
+                    if(m) { 
+                        try { meta = jsyaml.load(m[1]) || {}; } catch(e) {} 
+                        body = text.replace(m[0], '');
+                    }
+                    if (!meta.title) {
+                        const h1Match = body.match(/^#\s+(.+)$/m);
+                        if (h1Match) meta.title = h1Match[1].trim();
+                    }
+                    return { ...meta, body };
+                },
+                extractSummary(body) {
+                    const clean = body.replace(/[#*`\[\]()!]/g, '').replace(/\n/g, ' ').trim();
+                    return clean.length > 120 ? clean.substring(0, 120) + '...' : clean || '설명이 없습니다.';
+                },
                 transformTabs() {
                     App.ui.preview.querySelectorAll('tabs').forEach(el => {
-                        const items = el.querySelectorAll('tabitem'); if (!items.length) return;
-                        const c = document.createElement('div'); c.className = 'tabs-container';
-                        const nav = document.createElement('ul'); nav.className = 'tabs-nav';
-                        items.forEach((item, i) => {
-                            const btn = document.createElement('button'); btn.className = `tab-btn ${i === 0 ? 'active' : ''}`;
-                            btn.innerText = item.getAttribute('label') || `Tab ${i + 1}`;
-                            btn.onclick = () => { c.querySelectorAll('.tab-btn').forEach((b, x) => b.classList.toggle('active', x === i)); c.querySelectorAll('.tab-panel').forEach((p, x) => p.classList.toggle('active', x === i)); };
-                            nav.appendChild(btn); const p = document.createElement('div'); p.className = `tab-panel ${i === 0 ? 'active' : ''}`; p.innerHTML = item.innerHTML; c.appendChild(p);
+                        const items = el.querySelectorAll('tabitem'); if(!items.length) return;
+                        const c = document.createElement('div'); c.className='tabs-container';
+                        const nav = document.createElement('ul'); nav.className='tabs-nav';
+                        items.forEach((item,i)=>{
+                            const btn=document.createElement('button'); btn.className=`tab-btn ${i===0?'active':''}`;
+                            btn.innerText=item.getAttribute('label')||`Tab ${i+1}`;
+                            btn.onclick=()=>{
+                                c.querySelectorAll('.tab-btn').forEach((b,idx)=>b.classList.toggle('active',idx===i));
+                                c.querySelectorAll('.tab-panel').forEach((p,idx)=>p.classList.toggle('active',idx===i));
+                            };
+                            nav.appendChild(btn);
+                            const p=document.createElement('div'); p.className=`tab-panel ${i===0?'active':''}`; p.innerHTML=item.innerHTML; c.appendChild(p);
                         });
-                        c.insertBefore(nav, c.firstChild); el.replaceWith(c);
+                        c.insertBefore(nav,c.firstChild); el.replaceWith(c);
                     });
                 }
             }
         };
-        window.onload = () => App.init();
+        document.addEventListener('DOMContentLoaded', () => App.init());
     </script>
 </body>
 </html>
